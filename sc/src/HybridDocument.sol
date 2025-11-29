@@ -7,61 +7,142 @@ import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IIssuerRegistry {
     function isIssuer(address _account) external view returns (bool);
+    function issuerNames(address _account) external view returns (string memory);
 }
 
 contract HybridDocument is ERC721, ERC721URIStorage, Ownable {
     
-    uint256 private _nextTokenId;
+    // FIX 1: Start dari 1 agar mapping hashToToken(0) valid untuk pengecekan existence
+    uint256 private _nextTokenId = 1; 
+    
     IIssuerRegistry public issuerRegistry;
 
-    mapping(uint256 => bool) public isSoulbound;
+    struct DocumentData {
+        bytes32 documentHash;
+        address issuer;
+        uint256 timestamp;
+        bool isSoulbound;
+        bool isVerified;
+        bool isRevoked;
+    }
     
-    // TAMBAHAN: Mapping untuk menandai dokumen ini "Verified Issuer" atau "Public"
-    // TokenID => True (Resmi/Centang Biru) / False (Public/User Biasa)
-    mapping(uint256 => bool) public isVerifiedIssuer;
-
-    event DocumentMinted(uint256 indexed tokenId, address indexed to, bool isSoulbound, bool isVerified);
-
-    constructor(address _registryAddress) ERC721("Hybrid Academic Document", "HAD") Ownable(msg.sender) {
+    mapping(uint256 => DocumentData) public documents;
+    mapping(bytes32 => uint256) public hashToToken;
+    mapping(address => uint256[]) private issuerDocuments;
+    
+    event DocumentMinted(uint256 indexed tokenId, address indexed recipient, address indexed issuer, bytes32 documentHash, bool isSoulbound, bool isVerified);
+    event DocumentRevoked(uint256 indexed tokenId, address indexed issuer, uint256 timestamp);
+    
+    constructor(address _registryAddress) ERC721("Velipe Document", "VDOC") Ownable(msg.sender) {
         issuerRegistry = IIssuerRegistry(_registryAddress);
     }
 
-    // --- FUNGSI 1: UNTUK INSTITUSI (Verified) ---
-    // (Hanya bisa dipanggil oleh Kampus/Mitra)
-    function mintOfficialDocument(address to, string memory uri, bool _soulbound) public {
-        require(issuerRegistry.isIssuer(msg.sender), "Hanya Issuer resmi!");
-        _createToken(to, uri, _soulbound, true); // True = Verified
+    function mintOfficialDocument(address to, string memory uri, bool _soulbound, bytes32 _documentHash) public {
+        require(issuerRegistry.isIssuer(msg.sender), "Only verified issuers can mint official documents");
+        require(_documentHash != bytes32(0), "Document hash cannot be empty");
+        // Check collision: 0 berarti belum ada (karena ID mulai dari 1)
+        require(hashToToken[_documentHash] == 0, "Document with this hash already exists");
+        
+        _createToken(to, uri, _soulbound, true, _documentHash);
     }
 
-    // --- FUNGSI 2: UNTUK JOKO (Public) ---
-    // (Bisa dipanggil siapa saja, tanpa syarat)
-    function mintPublicDocument(string memory uri, bool _soulbound) public {
-        // Joko minting untuk dirinya sendiri (msg.sender)
-        // False = Unverified (Self-Signed)
-        _createToken(msg.sender, uri, _soulbound, false); 
+    function mintPublicDocument(string memory uri, bool _soulbound, bytes32 _documentHash) public {
+        require(_documentHash != bytes32(0), "Document hash cannot be empty");
+        require(hashToToken[_documentHash] == 0, "Document with this hash already exists");
+        
+        _createToken(msg.sender, uri, _soulbound, false, _documentHash);
     }
 
-    // --- FUNGSI INTERNAL (Dapur Pencetakan) ---
-    function _createToken(address to, string memory uri, bool _soulbound, bool _verified) internal {
+    function _createToken(address to, string memory uri, bool _soulbound, bool _verified, bytes32 _documentHash) internal {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         
-        isSoulbound[tokenId] = _soulbound;
-        isVerifiedIssuer[tokenId] = _verified; // Simpan status centang biru/tidak
-
-        emit DocumentMinted(tokenId, to, _soulbound, _verified);
+        documents[tokenId] = DocumentData({
+            documentHash: _documentHash,
+            issuer: msg.sender,
+            timestamp: block.timestamp,
+            isSoulbound: _soulbound,
+            isVerified: _verified,
+            isRevoked: false
+        });
+        
+        hashToToken[_documentHash] = tokenId;
+        issuerDocuments[msg.sender].push(tokenId);
+        
+        emit DocumentMinted(tokenId, to, msg.sender, _documentHash, _soulbound, _verified);
     }
 
-    // ... (Sisa fungsi _update dan tokenURI sama seperti sebelumnya) ...
-    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
-        address from = _ownerOf(tokenId);
-        if (isSoulbound[tokenId] && from != address(0) && to != address(0)) {
-            revert("Error: Dokumen ini bersifat Soulbound dan tidak bisa dipindahtangankan!");
+    function verifyByHash(bytes32 _hash) public view returns (bool exists, uint256 tokenId, address owner, address issuer, string memory issuerName, DocumentData memory data) {
+        tokenId = hashToToken[_hash];
+        
+        // Jika tokenId 0, berarti dokumen tidak ada (karena ID mulai dari 1)
+        if (tokenId == 0) {
+            return (false, 0, address(0), address(0), "", documents[0]); // return empty struct
         }
-        return super._update(to, tokenId, auth);
+        
+        data = documents[tokenId];
+        owner = ownerOf(tokenId);
+        issuer = data.issuer;
+        
+        if (data.isVerified) {
+            issuerName = issuerRegistry.issuerNames(issuer);
+        } else {
+            issuerName = "Self-Signed (Public)";
+        }
+        
+        return (true, tokenId, owner, issuer, issuerName, data);
     }
     
+    function getDocumentData(uint256 tokenId) public view returns (DocumentData memory) {
+        require(_ownerOf(tokenId) != address(0), "Document does not exist");
+        return documents[tokenId];
+    }
+
+    function revokeDocument(uint256 tokenId) public {
+        DocumentData storage doc = documents[tokenId];
+        require(_ownerOf(tokenId) != address(0), "Document does not exist");
+        require(doc.issuer == msg.sender, "Only issuer can revoke document");
+        require(!doc.isRevoked, "Document already revoked");
+        
+        doc.isRevoked = true;
+        emit DocumentRevoked(tokenId, msg.sender, block.timestamp);
+    }
+
+    function getIssuerDocuments(address _issuer) public view returns (uint256[] memory) {
+        return issuerDocuments[_issuer];
+    }
+    
+    function totalSupply() public view returns (uint256) {
+        return _nextTokenId - 1; // Adjust karena start dari 1
+    }
+
+    // ========== OVERRIDES & SECURITY ==========
+    
+    // FIX 2: Override _isAuthorized untuk membiarkan Issuer melewati check Approval
+    function _isAuthorized(address owner, address spender, uint256 tokenId) internal view override(ERC721) returns (bool) {
+        // Check logic standar (owner/approved/operator)
+        if (super._isAuthorized(owner, spender, tokenId)) {
+            return true;
+        }
+        // Logic tambahan: Issuer selalu authorized (terutama untuk SBT/Revoke/Re-issue case)
+        return (spender == documents[tokenId].issuer);
+    }
+
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
+        address from = _ownerOf(tokenId);
+        
+        // SBT Logic: Block transfer kecuali mint/burn atau dilakukan oleh issuer
+        if (from != address(0) && to != address(0)) {
+            DocumentData memory doc = documents[tokenId];
+            if (doc.isSoulbound) {
+                require(auth == doc.issuer || msg.sender == doc.issuer, "SBT: Token is non-transferable");
+            }
+        }
+        
+        return super._update(to, tokenId, auth);
+    }
+
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }

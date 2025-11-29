@@ -1,5 +1,9 @@
-import abi from "./abi.json";
+// fe/constants/index.ts
+export const CONTRACT_ADDRESS = "0xDEF456..."; // From deployment
+export const REGISTRY_ADDRESS = "0xABC123..."; // From deployment
 
-// Ganti dengan alamat kontrak yang muncul pas deploy di terminal tadi
-export const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-export const CONTRACT_ABI = abi;
+// Copy ABI dari sc/out/HybridDocument.sol/HybridDocument.json
+export const CONTRACT_ABI = [...];
+
+// Copy ABI dari sc/out/IssuerRegistry.sol/IssuerRegistry.json
+export const REGISTRY_ABI = [...];

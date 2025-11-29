@@ -33,3 +33,5 @@ contract DeployScript is Script {
         return (registry, document);
     }
 }
+
+//forge script script/Deploy.s.sol:DeployScript --rpc-url $ARBITRUM_SEPOLIA_RPC --broadcast --verify

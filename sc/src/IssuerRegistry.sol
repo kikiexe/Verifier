@@ -4,7 +4,6 @@ pragma solidity ^0.8.30;
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract IssuerRegistry is Ownable {
-    
     event IssuerAdded(address indexed issuer, string name);
     event IssuerRemoved(address indexed issuer);
 
@@ -25,7 +24,7 @@ contract IssuerRegistry is Ownable {
 
     function removeIssuer(address _issuer) external onlyOwner {
         require(authorizedIssuers[_issuer], "Issuer tidak ditemukan");
-
+        
         authorizedIssuers[_issuer] = false;
         delete issuerNames[_issuer];
 
