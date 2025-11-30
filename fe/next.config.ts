@@ -3,12 +3,29 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   
-  // 1. Mencegah error library "pino" (dipakai WalletConnect) saat build
-  serverExternalPackages: ["pino", "pino-pretty", "thread-stream"],
+  // 1. Transpile Web3 packages to ensure they work correctly in Next.js App Router
+  transpilePackages: [
+    '@rainbow-me/rainbowkit', 
+    'wagmi', 
+    'viem', 
+    '@metamask/sdk'
+  ],
 
-  // 2. Konfigurasi Webpack
+  // 2. Prevent server-side build errors for specific libraries
+  serverExternalPackages: ["pino", "pino-pretty"],
+
+  // 3. Webpack Configuration
   webpack: (config) => {
-    // A. Ignore module Node.js yang tidak ada di browser
+    // A. Handle Node.js modules that are not available in the browser
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      crypto: false,
+    };
+
+    // B. Ignore specific modules that cause issues
     config.externals.push({
       "utf-8-validate": "commonjs utf-8-validate",
       "bufferutil": "commonjs bufferutil",
@@ -17,19 +34,22 @@ const nextConfig: NextConfig = {
       "encoding": "commonjs encoding",
     });
 
-    // B. Ignore module React Native agar tidak error di Vercel
+    // C. Force alias for React Native Async Storage to false (ignore it)
     config.resolve.alias = {
       ...config.resolve.alias,
       "@react-native-async-storage/async-storage": false, 
     };
 
-    // C. Abaikan warning source map
-    config.ignoreWarnings = [/Failed to parse source map/]; 
+    // D. Suppress specific warnings that are safe to ignore
+    config.ignoreWarnings = [
+      /Failed to parse source map/,
+      /Module not found: Can't resolve '@react-native-async-storage\/async-storage'/,
+    ];
     
     return config;
   },
   
-  // 3. Bypass error type checking saat build (agar deploy berhasil dulu)
+  // 4. Bypass checking during build to ensure deployment succeeds
   typescript: {
     ignoreBuildErrors: true,
   },
