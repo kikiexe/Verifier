@@ -135,8 +135,22 @@ contract HybridDocument is ERC721, ERC721URIStorage, Ownable {
         // SBT Logic: Block transfer kecuali mint/burn atau dilakukan oleh issuer
         if (from != address(0) && to != address(0)) {
             DocumentData memory doc = documents[tokenId];
+            // Logika Baru (Aman)
             if (doc.isSoulbound) {
-                require(auth == doc.issuer || msg.sender == doc.issuer, "SBT: Token is non-transferable");
+                
+                // Skenario 1: Dokumen Resmi (Verified)
+                if (doc.isVerified) {
+                // Boleh ditransfer CUMA oleh Issuer (Kampus).
+                // Tujuannya: Jika mahasiswa kena hack, Kampus bisa "menyelamatkan" ijazahnya ke wallet baru.
+                require(msg.sender == doc.issuer, "SBT: Only Issuer can transfer");
+                } 
+                
+                // Skenario 2: Dokumen Pribadi (Self-Signed / Public)
+                else {
+                // SAMA SEKALI TIDAK BOLEH DITRANSFER oleh siapapun, termasuk pembuatnya.
+                // Langsung tolak (revert).
+                revert("SBT: Token is non-transferable (Self-Signed)");
+                }
             }
         }
         

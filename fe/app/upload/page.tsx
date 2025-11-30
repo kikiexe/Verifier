@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { useEthersSigner } from "@/utils/ethers-adapter";
-import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/ipfs";
+import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/ipfs"; // Pastikan import ini ada walau file upload dimatikan sementara
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "@/constants";
 import HybridToggle from "@/components/HybridToggle";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -32,36 +32,73 @@ export default function UploadPage() {
     if (address) setRecipient(address);
   }, [address]);
 
-  const calculateHash = async (file: File): Promise<string> => {
-    const arrayBuffer = await file.arrayBuffer();
+  const calculateHash = async (fileInput: File): Promise<string> => {
+    const arrayBuffer = await fileInput.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return "0x" + hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   };
 
+  const validateInput = (): boolean => {
+    // 1. Cek File Ada
+    if (!file) {
+      alert("File belum dipilih!");
+      return false;
+    }
+    
+    // 2. Cek Tipe File (Wajib PDF)
+    if (file.type !== "application/pdf") {
+      alert("Hanya format PDF yang diizinkan! (Security Check)");
+      return false;
+    }
+
+    // 3. Cek Ukuran File (Misal Max 5MB)
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_SIZE) {
+      alert("Ukuran file terlalu besar! Maksimal 5MB.");
+      return false;
+    }
+
+    // 4. Cek Input Teks
+    if (!form.name.trim() || form.name.length < 5) {
+      alert("Judul dokumen terlalu pendek (min. 5 karakter).");
+      return false;
+    }
+
+    if (!recipient || !ethers.isAddress(recipient)) {
+      alert("Address penerima tidak valid (Format Ethereum: 0x...)");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleMint = async () => {
-    if (!file || !address || !signer) return alert("Wallet belum terkoneksi!");
-    if (!recipient) return alert("Address penerima kosong!");
+    if (!isConnected) return alert("Koneksikan wallet dulu!");
+    
+    // --- FIX TYPESCRIPT 1: Cek Signer ---
+    // TypeScript perlu jaminan bahwa 'signer' tidak undefined sebelum dipakai
+    if (!signer) return alert("Signer belum siap / Wallet error!");
+
+    if (!validateInput()) return;
+
+    // --- FIX TYPESCRIPT 2: Cek File ---
+    // TypeScript perlu jaminan eksplisit di scope ini bahwa file ada
+    if (!file) return; 
 
     setLoading(true);
     setSuccessTx("");
 
     try {
-      // 1. Signature Check (Gratis) - Mencegah upload spam ke IPFS jika user batal
-      setStatus("Mohon tanda tangani izin upload...");
-      const message = `Konfirmasi Upload Dokumen:\nNama File: ${file.name}\nTanggal: ${new Date().toLocaleString()}`;
+      setStatus("Menghitung Hash Dokumen...");
       
-      // Ini akan memunculkan popup Wallet (Sign Message). 
-      // Jika user reject, ini akan throw error dan masuk ke catch.
-      await signer.signMessage(message); 
-
-      // 2. Jika lolos signature, baru mulai proses berat
-      setStatus("Menghitung Hash & Upload IPFS...");
+      // Sekarang aman karena kita sudah cek 'if (!file) return' di atas
       const docHash = await calculateHash(file);
       setDocumentHash(docHash);
       
-      const fileCid = await uploadFileToIPFS(file);
-      
+      // const fileCid = await uploadFileToIPFS(file); // Privacy: OFF
+      const fileCid = "private-document"; 
+
       const metadata = {
         name: form.name,
         description: form.description,
@@ -73,7 +110,12 @@ export default function UploadPage() {
         ],
       };
       
-      setStatus("Upload Metadata JSON...");
+      setStatus("Upload Metadata JSON (Privasi Terjaga)...");
+      const message = `Konfirmasi Penerbitan:\nHash: ${docHash}\nPenerima: ${recipient}`;
+      
+      // Sekarang aman karena kita sudah cek 'if (!signer) return' di atas
+      await signer.signMessage(message);
+
       const metadataCid = await uploadJSONToIPFS(metadata);
 
       setStatus("Menunggu Konfirmasi Transaksi Blockchain...");
@@ -81,30 +123,22 @@ export default function UploadPage() {
 
       let tx;
       try {
-        // Coba mint sebagai Official (jika address terdaftar di whitelist)
         tx = await contract.mintOfficialDocument(recipient, metadataCid, isSoulbound, docHash);
         setStatus("Mencetak Dokumen Resmi (Verified Issuer)...");
       } catch (err) {
         console.log("Not verified issuer, switching to public mint...");
-        // Fallback ke Public Mint jika gagal (bukan issuer resmi)
         tx = await contract.mintPublicDocument(metadataCid, isSoulbound, docHash);
         setStatus("Mencetak Dokumen Pribadi (Self-Signed)...");
       }
 
-      setStatus("Menunggu Konfirmasi Blockchain...");
       await tx.wait();
       
       setSuccessTx(tx.hash);
-      setStatus("SUKSES! Dokumen tercatat.");
+      setStatus("SUKSES! Hash tercatat, File aman di lokal.");
       
     } catch (error: any) {
       console.error(error);
-      // Handle jika user menolak signature atau transaksi
-      if (error.code === 'ACTION_REJECTED' || error.info?.error?.code === 4001) {
-        setStatus("❌ Dibatalkan oleh pengguna.");
-      } else {
-        setStatus("❌ Gagal: " + (error.reason || error.message));
-      }
+      setStatus("❌ Gagal: " + (error.reason || error.message));
     } finally {
       setLoading(false);
     }
