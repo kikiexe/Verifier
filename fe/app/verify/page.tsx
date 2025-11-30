@@ -51,7 +51,7 @@ export default function VerifyPage() {
       let metadata = {};
       try {
         const uri = await contract.tokenURI(tokenId);
-        const httpUri = uri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
+        const httpUri = uri.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
         const metaRes = await fetch(httpUri);
         metadata = await metaRes.json();
       } catch (err) {

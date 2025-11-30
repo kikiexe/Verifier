@@ -63,7 +63,7 @@ export default function AdminPage() {
     if (!newIssuerAddress || !newIssuerName) return alert("Data tidak lengkap!");
     
     setLoading(true);
-    setStatus("⏳ Mendaftarkan Issuer ke Blockchain...");
+    setStatus("Mendaftarkan Issuer ke Blockchain...");
 
     try {
       const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
@@ -93,7 +93,7 @@ export default function AdminPage() {
     if (!confirm(`Yakin ingin menghapus ${targetName}?`)) return;
 
     setLoading(true);
-    setStatus("⏳ Menghapus issuer...");
+    setStatus("Menghapus issuer...");
 
     try {
       const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
@@ -113,7 +113,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 font-sans text-slate-900">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-black mb-6">🏛️ Governance Dashboard</h1>
+        <h1 className="text-3xl font-black mb-6">Governance Dashboard</h1>
 
         {/* 3. Gunakan ConnectButton dari RainbowKit, bukan button manual */}
         <div className="mb-8 flex justify-center">
@@ -164,7 +164,7 @@ export default function AdminPage() {
                 disabled={loading}
                 className="w-full bg-slate-900 text-white p-4 rounded-lg font-bold hover:bg-slate-800 disabled:bg-gray-400 transition-all active:scale-[0.99]"
               >
-                {loading ? "Memproses Transaksi..." : "✨ Daftarkan Issuer Baru"}
+                {loading ? "Memproses Transaksi..." : "Daftarkan Issuer Baru"}
               </button>
             </div>
             

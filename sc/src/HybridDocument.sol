@@ -118,6 +118,14 @@ contract HybridDocument is ERC721, ERC721URIStorage, Ownable {
         return _nextTokenId - 1; // Adjust karena start dari 1
     }
 
+    /**
+     * @dev Fungsi darurat untuk ganti alamat Registry (Buku Telepon)
+     */
+    function setIssuerRegistry(address _newRegistry) external onlyOwner {
+        require(_newRegistry != address(0), "Address tidak valid");
+        issuerRegistry = IIssuerRegistry(_newRegistry);
+    }
+
     // ========== OVERRIDES & SECURITY ==========
     
     // FIX 2: Override _isAuthorized untuk membiarkan Issuer melewati check Approval

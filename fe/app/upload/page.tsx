@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { useEthersSigner } from "@/utils/ethers-adapter";
 import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/ipfs"; // Pastikan import ini ada walau file upload dimatikan sementara
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from "@/constants";
+import { CONTRACT_ADDRESS, CONTRACT_ABI, REGISTRY_ADDRESS, REGISTRY_ABI } from "@/constants";
 import HybridToggle from "@/components/HybridToggle";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Upload, FileText, X, CheckCircle, Loader2 } from "lucide-react";
@@ -119,20 +119,30 @@ export default function UploadPage() {
       const metadataCid = await uploadJSONToIPFS(metadata);
 
       setStatus("Menunggu Konfirmasi Transaksi Blockchain...");
+      
+      // --- PERBAIKAN DI SINI ---
+      // 1. Definisikan dulu kontrak utamanya (INI YANG KETINGGALAN)
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      
+      // 2. Definisikan kontrak registry untuk cek status
+      const registryContract = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
+      
+      // 3. Cek status
+      const isIssuer = await registryContract.isIssuer(address); 
 
       let tx;
-      try {
-        tx = await contract.mintOfficialDocument(recipient, metadataCid, isSoulbound, docHash);
-        setStatus("Mencetak Dokumen Resmi (Verified Issuer)...");
-      } catch (err) {
-        console.log("Not verified issuer, switching to public mint...");
-        tx = await contract.mintPublicDocument(metadataCid, isSoulbound, docHash);
-        setStatus("Mencetak Dokumen Pribadi (Self-Signed)...");
+      if (isIssuer) {
+          setStatus("Mencetak Dokumen Resmi (Verified Issuer)...");
+          tx = await contract.mintOfficialDocument(recipient, metadataCid, isSoulbound, docHash);
+      } else {
+          setStatus("Mencetak Dokumen Pribadi (Self-Signed)...");
+          tx = await contract.mintPublicDocument(metadataCid, isSoulbound, docHash);
       }
 
       await tx.wait();
       
+      alert("PENTING: Simpan file PDF Anda baik-baik! Kami tidak menyimpannya di server. Jika file hilang, sertifikat ini tidak bisa diverifikasi.");
+
       setSuccessTx(tx.hash);
       setStatus("SUKSES! Hash tercatat, File aman di lokal.");
       
@@ -162,9 +172,83 @@ export default function UploadPage() {
         {!isConnected ? (
             <div className={`${cardStyle} text-center space-y-4`}>
                 <p className="font-bold text-lg">Anda belum terhubung.</p>
-                <div className="flex justify-center">
-                    <ConnectButton />
-                </div>
+                <div>
+                <ConnectButton.Custom>
+                  {({
+                    account,
+                    chain,
+                    openAccountModal,
+                    openChainModal,
+                    openConnectModal,
+                    authenticationStatus,
+                    mounted,
+                  }) => {
+                    const ready = mounted && authenticationStatus !== 'loading';
+                    const connected =
+                      ready &&
+                      account &&
+                      chain &&
+                      (!authenticationStatus || authenticationStatus === 'authenticated');
+
+                    return (
+                      <div
+                        {...(!ready && {
+                          'aria-hidden': true,
+                          'style': {
+                            opacity: 0,
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                          },
+                        })}
+                      >
+                        {(() => {
+                          if (!connected) {
+                            return (
+                              <button 
+                                onClick={openConnectModal} 
+                                type="button"
+                                // PERBAIKAN: Ganti baseButtonStyle -> buttonStyle
+                                className={`${buttonStyle} bg-blue-600 text-white hover:bg-blue-700`}
+                              >
+                                Connect Wallet
+                              </button>
+                            );
+                          }
+
+                          if (chain.unsupported) {
+                            return (
+                              <button 
+                                onClick={openChainModal} 
+                                type="button"
+                                // PERBAIKAN: Ganti baseButtonStyle -> buttonStyle
+                                className={`${buttonStyle} bg-red-500 text-white hover:bg-red-600`}
+                              >
+                                Wrong Network
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <div style={{ display: 'flex', gap: 12 }}>
+                              <button
+                                onClick={openAccountModal}
+                                type="button"
+                                // PERBAIKAN: Ganti baseButtonStyle -> buttonStyle
+                                className={`${buttonStyle} bg-green-400 text-black hover:bg-green-500 flex items-center gap-2`}
+                              >
+                                {account.displayName}
+                                {account.displayBalance
+                                  ? ` (${account.displayBalance})`
+                                  : ''}
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  }}
+                </ConnectButton.Custom>
+          </div>
             </div>
         ) : (
             <div className={`${cardStyle} space-y-6`}>
