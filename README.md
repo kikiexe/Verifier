@@ -1,159 +1,155 @@
-🔐 TrustChain: Platform Autentikasi Dokumen Digital Terdesentralisasi
+# Velipe: Decentralized Document Verification Platform
 
-Skripsi S1 - Universitas Amikom Yogyakarta > Judul: Rancang Bangun Sistem Autentikasi Dokumen Digital Menggunakan Smart Contract Berbasis Hybrid ERC-721 dan IPFS dengan Mekanisme Verifikasi Penerbit
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Network](https://img.shields.io/badge/network-Base%20Sepolia-blue)
+![Status](https://img.shields.io/badge/status-Development-yellow)
 
-(Ganti link gambar di atas dengan screenshot aplikasi kamu nanti)
+**Velipe** adalah solusi berbasis blockchain untuk autentikasi dan validasi dokumen digital. Platform ini dirancang untuk mencegah pemalsuan dokumen penting (seperti ijazah, sertifikat kompetensi, dan lisensi profesional) dengan memanfaatkan transparansi dan *immutability* dari teknologi Blockchain serta efisiensi penyimpanan terdistribusi (IPFS).
 
-📖 Tentang Proyek
+Sistem ini mengimplementasikan standar **Hybrid ERC-721**, yang memberikan fleksibilitas unik dalam pengelolaan aset digital:
+* **Soulbound Token (SBT):** Aset non-transferable yang terikat pada identitas pemilik (Identity-Bound). Ideal untuk dokumen identitas, kredensial akademik, dan rekam jejak.
+* **Standard NFT:** Aset yang dapat dipindahtangankan. Ideal untuk sertifikat kepemilikan aset, tiket, atau voucher.
 
-TrustChain adalah Decentralized Application (DApp) yang dirancang untuk mengatasi masalah pemalsuan dokumen akademik dan sertifikat profesional. Sistem ini memanfaatkan teknologi Blockchain (Arbitrum Sepolia) dan IPFS untuk menciptakan ekosistem verifikasi yang aman, transparan, dan efisien.
+---
 
-Fitur utama dari sistem ini adalah penerapan standar Hybrid ERC-721, yang memungkinkan satu kontrak pintar (Smart Contract) untuk menangani dua jenis aset sekaligus:
+## Fitur Utama
 
-Soulbound Token (SBT): Dokumen yang terkunci pada identitas pemilik (Non-transferable). Cocok untuk Ijazah, Transkrip Nilai, dan Surat Warisan.
+### Hybrid Token Standard
+Smart Contract tunggal yang mampu menangani dua logika kepemilikan sekaligus. Status dokumen (SBT/NFT) ditentukan secara *immutable* pada saat proses *minting*.
 
-Transferable NFT: Dokumen/Aset digital yang dapat dipindah-tangankan atau diperjualbelikan. Cocok untuk Sertifikat Pelatihan, Tiket Event, atau Karya Seni.
+### Decentralized Governance (Role-Based Access Control)
+Menerapkan sistem `AccessControl` untuk manajemen penerbit (*Issuer*). Hanya entitas yang telah melalui proses *Know Your Business* (KYB) dan di-*whitelist* oleh Admin Governance yang dapat menerbitkan dokumen berstatus **"Official Verified"**.
 
-✨ Fitur Utama
+### Privacy-Preserving Architecture
+File dokumen fisik (PDF) tidak diunggah ke publik untuk menjaga privasi data sensitif (PII Compliant). Sistem hanya mencatat **Cryptographic Hash (SHA-256)** dan metadata esensial ke dalam Blockchain/IPFS. Verifikasi dilakukan dengan mencocokkan *fingerprint* file lokal dengan data *on-chain*.
 
-🛡️ Hybrid Token Mechanism: Fleksibilitas menentukan status dokumen (SBT atau NFT) saat pencetakan (minting).
+### Self-Sovereign Minting
+Memungkinkan pengguna individu untuk melakukan *timestamping* dokumen pribadi secara mandiri (*Self-Signed*) untuk keperluan pembuktian kepemilikan hak cipta atau integritas data tanpa memerlukan otoritas pusat.
 
-🏛️ Issuer Verification: Mekanisme whitelist on-chain untuk menjamin hanya institusi resmi yang mendapatkan tanda "Verified".
+---
 
-👤 Public Minting: Memungkinkan pengguna umum (Non-Institusi) untuk mengamankan dokumen pribadi secara mandiri (Self-Signed).
+## Teknologi & Arsitektur
 
-📦 IPFS Storage: Penyimpanan metadata dan file dokumen secara terdistribusi menggunakan Pinata IPFS untuk efisiensi biaya (gas fee).
+Project ini dibangun menggunakan arsitektur **Monorepo** yang modern dan terukur.
 
-✅ Real-time Verification: Verifikasi keaslian dokumen secara instan menggunakan Token ID tanpa perantara.
+### Blockchain (Smart Contract)
+* **Base Sepolia:** Jaringan L2 EVM yang cepat dan hemat biaya.
+* **Solidity 0.8.x:** Bahasa kontrak cerdas.
+* **Foundry:** Framework pengembangan Ethereum untuk testing, fuzzing, dan deployment yang robust.
+* **OpenZeppelin:** Standar keamanan untuk ERC-721 dan Access Control.
 
-🛠️ Teknologi yang Digunakan
+### Frontend (DApp)
+* **Next.js 14 (App Router):** Framework React modern untuk performa tinggi.
+* **TypeScript:** Type-safety untuk pengembangan skala besar.
+* **Wagmi & Viem:** Library interaksi Ethereum yang ringan dan modern.
+* **RainbowKit:** Manajemen koneksi wallet yang intuitif.
+* **Tailwind CSS:** Utility-first CSS framework.
+* **Pinata IPFS:** Layanan pinning untuk desentralisasi metadata.
 
-Blockchain & Backend:
+---
 
-Solidity: Bahasa pemrograman Smart Contract.
+## Struktur Direktori
 
-Foundry: Framework untuk pengembangan, pengujian, dan deploy kontrak.
-
-OpenZeppelin: Standar keamanan kontrak ERC-721 dan Ownable.
-
-Arbitrum Sepolia: Jaringan Layer 2 Ethereum (Testnet) untuk transaksi cepat dan murah.
-
-Frontend & Integration:
-
-Next.js 14: Framework React untuk antarmuka pengguna.
-
-TypeScript: Supaya kodingan lebih aman dan terstruktur.
-
-Ethers.js v6: Library untuk interaksi antara Frontend dan Blockchain.
-
-Tailwind CSS: Styling antarmuka yang modern dan responsif.
-
-Pinata API: Gateway untuk upload file ke IPFS.
-
-📂 Struktur Proyek
-
-Proyek ini menggunakan struktur Monorepo yang memisahkan logika Blockchain dan Frontend.
-
-skripsi-hybrid-sbt/
-├── blockchain/                # SMART CONTRACT (Foundry)
-│   ├── src/                   # Kode Solidity (.sol)
-│   │   ├── HybridDocument.sol # Kontrak Utama (Logika Hybrid)
-│   │   └── IssuerRegistry.sol # Kontrak Whitelist Mitra
-│   ├── test/                  # Script Pengujian (.t.sol)
-│   ├── script/                # Script Deploy (.s.sol)
-│   └── foundry.toml           # Konfigurasi Foundry
+```bash
+Verifier/
+├── sc/                        # SMART CONTRACT (Foundry Environment)
+│   ├── src/                   # Source Code (.sol)
+│   │   ├── HybridDocument.sol # Core Logic (ERC-721 Hybrid)
+│   │   └── IssuerRegistry.sol # Governance Logic (AccessControl)
+│   ├── test/                  # Unit & Integration Tests
+│   └── script/                # Deployment Scripts
 │
-└── frontend/                  # WEBSITE (Next.js)
-    ├── src/
-    │   ├── app/               # Halaman Website (Home, Dashboard, Verify)
-    │   ├── components/        # Komponen UI (Navbar, Card)
-    │   ├── constants/         # Alamat Kontrak & ABI
-    │   └── utils/             # Fungsi Upload IPFS
-    ├── public/                # Aset Gambar
-    └── next.config.mjs
+└── fe/                        # FRONTEND (Next.js Environment)
+    ├── app/                   # App Router Pages
+    ├── components/            # Reusable UI Components
+    ├── constants/             # ABI & Contract Configuration
+    └── utils/                 # Utilities (Hashing, IPFS)
+````
 
+-----
 
-🚀 Cara Menjalankan (Local Development)
+## Panduan Instalasi & Pengembangan
 
-Ikuti langkah-langkah berikut untuk menjalankan proyek di komputer lokal.
+Ikuti langkah berikut untuk menjalankan proyek di lingkungan lokal.
 
-Prasyarat
+### Prasyarat
 
-Node.js (Versi 18 atau lebih baru)
+  * Node.js (v18+)
+  * Foundry
+  * Dompet Web3 (MetaMask/Rabby) dengan saldo Base Sepolia ETH.
+  * API Key Pinata & BaseScan.
 
-Foundry (Untuk Blockchain lokal)
+### 1\. Setup Smart Contract (Backend)
 
-MetaMask (Extension Browser)
+Masuk ke direktori `sc`:
 
-Akun Pinata (Untuk API Key IPFS)
+```bash
+cd sc
+```
 
-1. Setup Blockchain (Backend)
+Install dependensi dan compile kontrak:
 
-Masuk ke folder blockchain dan install dependensi:
-
-cd blockchain
+```bash
 forge install
+forge build
+```
 
+Jalankan Unit Test untuk memastikan integritas logika:
 
-Jalankan Blockchain Lokal (Anvil):
+```bash
+forge test -vv
+```
 
-anvil
+Deploy ke Jaringan Base Sepolia:
+Pastikan Anda telah membuat file `.env` berdasarkan contoh.
 
+```bash
+source .env
+forge script script/Deploy.s.sol:DeployScript --rpc-url base-sepolia --broadcast --verify
+```
 
-(Biarkan terminal ini berjalan. Copy salah satu Private Key yang muncul untuk dipakai di MetaMask)
+### 2\. Setup Frontend (Client)
 
-Deploy Smart Contract ke Localhost (Buka terminal baru):
+Masuk ke direktori `fe`:
 
-forge script script/Deploy.s.sol:DeployScript --rpc-url [http://127.0.0.1:8545](http://127.0.0.1:8545) --broadcast --private-key <PRIVATE_KEY_ANVIL>
+```bash
+cd ../fe
+```
 
+Install dependensi:
 
-Catat alamat kontrak yang muncul di terminal!
-
-2. Setup Frontend (Website)
-
-Masuk ke folder frontend dan install dependensi:
-
-cd ../frontend
+```bash
 npm install
-
+```
 
 Konfigurasi Environment Variable:
-Buat file .env.local di dalam folder frontend, lalu isi:
+Buat file `.env` dan tambahkan kredensial yang diperlukan:
 
-NEXT_PUBLIC_PINATA_JWT=paste_jwt_pinata_kamu_disini
+```env
+NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_here
+NEXT_PUBLIC_WALLET_CONNECT_ID=your_reown_project_id
+```
 
+Jalankan Server Development:
 
-Update Alamat Kontrak:
-Buka file src/constants/index.ts dan ganti CONTRACT_ADDRESS dengan alamat yang didapat saat deploy tadi.
-
-Jalankan Website:
-
+```bash
 npm run dev
+```
 
+Aplikasi dapat diakses melalui `http://localhost:3000`.
 
-Buka browser dan akses: http://localhost:3000
+-----
 
-🧪 Pengujian Smart Contract (Testing)
+## Security & Testing
 
-Proyek ini dilengkapi dengan Automated Test untuk memastikan keamanan logika Hybrid (SBT tidak bisa dijual).
+Sistem ini telah melewati serangkaian pengujian otomatis menggunakan Foundry:
 
-Jalankan perintah ini di folder blockchain:
+  * **Access Control:** Memastikan hanya *Authorized Issuer* yang dapat membatalkan (*revoke*) atau mentransfer dokumen tertentu.
+  * **SBT Invariant:** Memastikan token berstatus SBT tidak dapat dipindahkan oleh pemilik (transfer revert), kecuali melalui mekanisme *recovery* oleh Issuer.
+  * **Data Integrity:** Validasi hash dokumen untuk mencegah kolisi data.
 
-forge test -vv
+-----
 
+## Lisensi
 
-Skenario Pengujian:
-
-✅ testMitraMinting: Mitra resmi berhasil mencetak dokumen "Verified".
-
-✅ testPublicMinting: User umum berhasil mencetak dokumen "Self-Signed".
-
-✅ testSBT_Fail: Dokumen bertipe SBT GAGAL saat coba ditransfer (Aman).
-
-✅ testNFT_Success: Dokumen bertipe NFT BERHASIL dipindah-tangankan.
-
-📄 Lisensi
-
-Proyek ini dibuat untuk keperluan Skripsi dan bersifat Open Source di bawah lisensi MIT.
-
-Dibuat oleh: [Nama Kamu] - Universitas Amikom Yogyakarta (2025)
+Didistribusikan di bawah lisensi **MIT**. Lihat `LICENSE` untuk informasi lebih lanjut.
