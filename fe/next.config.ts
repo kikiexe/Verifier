@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   
-  // 1. Transpile Web3 packages to ensure they work correctly in Next.js App Router
+  // 1. Transpile paket Web3 modern agar kompatibel
   transpilePackages: [
     '@rainbow-me/rainbowkit', 
     'wagmi', 
@@ -11,21 +10,13 @@ const nextConfig: NextConfig = {
     '@metamask/sdk'
   ],
 
-  // 2. Prevent server-side build errors for specific libraries
-  serverExternalPackages: ["pino", "pino-pretty"],
+  // 2. Mencegah error library logging "pino" & "thread-stream"
+  serverExternalPackages: ["pino", "pino-pretty", "thread-stream"],
 
-  // 3. Webpack Configuration
+  // 3. Konfigurasi Webpack Kustom
   webpack: (config) => {
-    // A. Handle Node.js modules that are not available in the browser
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-      crypto: false,
-    };
-
-    // B. Ignore specific modules that cause issues
+    
+    // A. Abaikan modul Node.js yang tidak ada di browser
     config.externals.push({
       "utf-8-validate": "commonjs utf-8-validate",
       "bufferutil": "commonjs bufferutil",
@@ -34,13 +25,13 @@ const nextConfig: NextConfig = {
       "encoding": "commonjs encoding",
     });
 
-    // C. Force alias for React Native Async Storage to false (ignore it)
+    // B. Matikan modul React Native agar tidak dicari oleh Webpack
     config.resolve.alias = {
       ...config.resolve.alias,
       "@react-native-async-storage/async-storage": false, 
     };
 
-    // D. Suppress specific warnings that are safe to ignore
+    // C. Sembunyikan warning yang mengganggu di log Vercel
     config.ignoreWarnings = [
       /Failed to parse source map/,
       /Module not found: Can't resolve '@react-native-async-storage\/async-storage'/,
@@ -48,12 +39,13 @@ const nextConfig: NextConfig = {
     
     return config;
   },
-  
-  // 4. Bypass checking during build to ensure deployment succeeds
+
+  // 4. Bypass error TypeScript saat build (PENTING untuk deploy cepat)
   typescript: {
     ignoreBuildErrors: true,
   },
   
+  // 5. Bypass error ESLint saat build
   // @ts-ignore
   eslint: {
     ignoreDuringBuilds: true,
