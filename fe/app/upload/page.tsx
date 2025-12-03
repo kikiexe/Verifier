@@ -4,13 +4,12 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { useEthersSigner } from "@/utils/ethers-adapter";
-import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/ipfs"; // Pastikan import ini ada walau file upload dimatikan sementara
+import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/ipfs"; 
 import { CONTRACT_ADDRESS, CONTRACT_ABI, REGISTRY_ADDRESS, REGISTRY_ABI } from "@/constants";
 import HybridToggle from "@/components/HybridToggle";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Upload, FileText, X, CheckCircle, Loader2 } from "lucide-react";
 
-// Saweria Utils
 const cardStyle = `border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg bg-white p-6 transition-all`;
 const inputStyle = `w-full px-4 py-3 border-2 border-black rounded-lg focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all bg-white font-bold placeholder:font-normal`;
 const buttonStyle = `w-full flex items-center justify-center gap-2 px-6 py-4 font-black text-black border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all`;
@@ -40,26 +39,23 @@ export default function UploadPage() {
   };
 
   const validateInput = (): boolean => {
-    // 1. Cek File Ada
     if (!file) {
       alert("File belum dipilih!");
       return false;
     }
     
-    // 2. Cek Tipe File (Wajib PDF)
+    // Wajib PDF
     if (file.type !== "application/pdf") {
       alert("Hanya format PDF yang diizinkan! (Security Check)");
       return false;
     }
 
-    // 3. Cek Ukuran File (Misal Max 5MB)
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
     if (file.size > MAX_SIZE) {
       alert("Ukuran file terlalu besar! Maksimal 5MB.");
       return false;
     }
 
-    // 4. Cek Input Teks
     if (!form.name.trim() || form.name.length < 5) {
       alert("Judul dokumen terlalu pendek (min. 5 karakter).");
       return false;
@@ -75,15 +71,9 @@ export default function UploadPage() {
 
   const handleMint = async () => {
     if (!isConnected) return alert("Koneksikan wallet dulu!");
-    
-    // --- FIX TYPESCRIPT 1: Cek Signer ---
-    // TypeScript perlu jaminan bahwa 'signer' tidak undefined sebelum dipakai
     if (!signer) return alert("Signer belum siap / Wallet error!");
 
     if (!validateInput()) return;
-
-    // --- FIX TYPESCRIPT 2: Cek File ---
-    // TypeScript perlu jaminan eksplisit di scope ini bahwa file ada
     if (!file) return; 
 
     setLoading(true);
@@ -92,11 +82,10 @@ export default function UploadPage() {
     try {
       setStatus("Menghitung Hash Dokumen...");
       
-      // Sekarang aman karena kita sudah cek 'if (!file) return' di atas
       const docHash = await calculateHash(file);
       setDocumentHash(docHash);
       
-      // const fileCid = await uploadFileToIPFS(file); // Privacy: OFF
+      // Menggunakan placeholder untuk file fisik (Privacy protection)
       const fileCid = "private-document"; 
 
       const metadata = {
@@ -113,21 +102,16 @@ export default function UploadPage() {
       setStatus("Upload Metadata JSON (Privasi Terjaga)...");
       const message = `Konfirmasi Penerbitan:\nHash: ${docHash}\nPenerima: ${recipient}`;
       
-      // Sekarang aman karena kita sudah cek 'if (!signer) return' di atas
       await signer.signMessage(message);
 
       const metadataCid = await uploadJSONToIPFS(metadata);
 
       setStatus("Menunggu Konfirmasi Transaksi Blockchain...");
       
-      // --- PERBAIKAN DI SINI ---
-      // 1. Definisikan dulu kontrak utamanya (INI YANG KETINGGALAN)
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-      
-      // 2. Definisikan kontrak registry untuk cek status
       const registryContract = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
       
-      // 3. Cek status
+      // Cek apakah user adalah verified issuer
       const isIssuer = await registryContract.isIssuer(address); 
 
       let tx;
@@ -158,7 +142,6 @@ export default function UploadPage() {
     <div className="min-h-screen bg-[#fdfdfd] pb-20 pt-8 font-sans text-slate-900">
       <main className="mx-auto max-w-2xl px-4">
         
-        {/* Header Box */}
         <div className="mb-6 rounded-lg border-2 border-black bg-[#fbbf24] p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <h2 className="text-xl font-black flex items-center gap-2">
             <Upload size={24}/> Terbitkan Dokumen
@@ -168,7 +151,6 @@ export default function UploadPage() {
             </p>
         </div>
 
-        {/* Connect Wallet Guard */}
         {!isConnected ? (
             <div className={`${cardStyle} text-center space-y-4`}>
                 <p className="font-bold text-lg">Anda belum terhubung.</p>
@@ -207,7 +189,6 @@ export default function UploadPage() {
                               <button 
                                 onClick={openConnectModal} 
                                 type="button"
-                                // PERBAIKAN: Ganti baseButtonStyle -> buttonStyle
                                 className={`${buttonStyle} bg-blue-600 text-white hover:bg-blue-700`}
                               >
                                 Connect Wallet
@@ -220,7 +201,6 @@ export default function UploadPage() {
                               <button 
                                 onClick={openChainModal} 
                                 type="button"
-                                // PERBAIKAN: Ganti baseButtonStyle -> buttonStyle
                                 className={`${buttonStyle} bg-red-500 text-white hover:bg-red-600`}
                               >
                                 Wrong Network
@@ -233,7 +213,6 @@ export default function UploadPage() {
                               <button
                                 onClick={openAccountModal}
                                 type="button"
-                                // PERBAIKAN: Ganti baseButtonStyle -> buttonStyle
                                 className={`${buttonStyle} bg-green-400 text-black hover:bg-green-500 flex items-center gap-2`}
                               >
                                 {account.displayName}
@@ -253,7 +232,6 @@ export default function UploadPage() {
         ) : (
             <div className={`${cardStyle} space-y-6`}>
                 
-                {/* Success State */}
                 {successTx && (
                     <div className="mb-6 rounded-lg border-2 border-black bg-green-100 p-4 animate-in zoom-in">
                         <div className="flex items-center gap-2 text-green-800 font-black text-lg mb-2">
@@ -336,13 +314,11 @@ export default function UploadPage() {
                     </div>
                 </div>
 
-                {/* Hybrid Toggle */}
                 <div>
                     <label className="block text-sm font-black mb-2">Jenis Kepemilikan:</label>
                     <HybridToggle isSoulbound={isSoulbound} setIsSoulbound={setIsSoulbound} />
                 </div>
 
-                {/* Action Button */}
                 <button 
                     onClick={handleMint}
                     disabled={loading || !file}
@@ -355,7 +331,6 @@ export default function UploadPage() {
                     )}
                 </button>
 
-                {/* Status Bar */}
                 {status && !successTx && (
                     <div className="text-center text-xs font-bold bg-gray-100 p-2 rounded border border-black animate-pulse">
                         {status}

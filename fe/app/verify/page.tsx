@@ -41,25 +41,22 @@ export default function VerifyPage() {
       const docHash = await calculateHash(file);
       console.log("Calculated Hash:", docHash);
 
-      // 2. Panggil Blockchain (Gunakan RPC Publik yang stabil)
+      // 2. Panggil Blockchain (Menggunakan RPC Publik)
       const provider = new ethers.JsonRpcProvider("https://base-sepolia.g.alchemy.com/v2/IRm0znUyu95uZVbyEupxv");
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-      // Panggil fungsi verifyByHash dari Smart Contract
+      // 3. Verifikasi on-chain
       const result = await contract.verifyByHash(docHash);
-      
-      // Destructure hasil return dari Solidity
       const [exists, tokenId, owner, issuer, issuerName, docData] = result;
 
       if (!exists) {
         throw new Error("Dokumen ini TIDAK TERDAFTAR di Blockchain TrustChain.");
       }
 
-      // 3. Ambil Metadata Tambahan (Optional)
+      // 4. Ambil Metadata (Optional via IPFS)
       let metadata = {};
       try {
         const uri = await contract.tokenURI(tokenId);
-        // Gunakan gateway IPFS publik yang lebih stabil/cepat
         const httpUri = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
         const metaRes = await fetch(httpUri);
         metadata = await metaRes.json();
@@ -75,7 +72,6 @@ export default function VerifyPage() {
         isSoulbound: docData.isSoulbound,
         isVerified: docData.isVerified,
         isRevoked: docData.isRevoked,
-        // Format tanggal agar enak dibaca (Indonesia)
         timestamp: new Date(Number(docData.timestamp) * 1000).toLocaleDateString("id-ID", { 
             weekday: 'long', 
             year: 'numeric', 
@@ -83,7 +79,7 @@ export default function VerifyPage() {
             day: 'numeric' 
         }),
         hash: docData.documentHash,
-        uri: await contract.tokenURI(tokenId), // Simpan URI asli untuk link tombol
+        uri: await contract.tokenURI(tokenId),
         metadata
       });
 
@@ -167,11 +163,11 @@ export default function VerifyPage() {
             </div>
         )}
 
-        {/* Success / Result State (NEW UI) */}
+        {/* Success / Result State */}
         {data && (
           <div className="mt-8 w-full max-w-3xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
             {/* Header Kartu - Gradient Background */}
-            <div className={`relative overflow-hidden rounded-t-3xl p-8 ${data.isVerified ? "bg-gradient-to-br from-blue-600 to-blue-800" : "bg-gradient-to-br from-gray-700 to-gray-900"} text-white shadow-2xl`}>
+            <div className={`relative overflow-hidden rounded-t-3xl p-8 ${data.isVerified ? "bg-linear-to-br from-blue-600 to-blue-800" : "bg-linear-to-br from-gray-700 to-gray-900"} text-white shadow-2xl`}>
               
               {/* Background Pattern Hiasan */}
               <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-10">
@@ -203,7 +199,7 @@ export default function VerifyPage() {
             </div>
 
             {/* Body Kartu - Detail Informasi */}
-            <div className="bg-white rounded-b-3xl p-8 shadow-2xl border border-t-0 border-gray-100 relative top-[-1px]">
+            <div className="bg-white rounded-b-3xl p-8 shadow-2xl border border-t-0 border-gray-100 relative top-px">
               
               {/* Revoked Warning */}
               {data.isRevoked && (
@@ -226,7 +222,7 @@ export default function VerifyPage() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Diterbitkan Oleh</p>
-                      <p className="text-xl font-bold text-gray-900 break-words leading-tight">
+                      <p className="text-xl font-bold text-gray-900 wrap-break-words leading-tight">
                         {data.issuerName || (data.isVerified ? "Institusi Tidak Dikenal" : "User (Self-Signed)")}
                       </p>
                       {data.issuerName && data.isVerified && (

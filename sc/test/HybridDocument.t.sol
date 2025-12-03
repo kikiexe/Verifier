@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// FIX 1: Hapus 'console' karena tidak dipakai
 import {Test} from "forge-std/Test.sol";
 import {IssuerRegistry} from "../src/IssuerRegistry.sol";
 import {HybridDocument} from "../src/HybridDocument.sol";
@@ -19,21 +18,17 @@ contract HybridDocumentTest is Test {
     bytes32 public testHash1 = keccak256("document1.pdf");
     bytes32 public testHash2 = keccak256("document2.pdf");
     
-    // FIX 3: Ubah 'testURI' menjadi 'testUri' untuk mixedCase
     string public testUri = "ipfs://QmTest123";
 
     function setUp() public {
         vm.startPrank(admin);
         registry = new IssuerRegistry();
         document = new HybridDocument(address(registry));
-        // Note: Pastikan logika addIssuer di sini sesuai dengan IssuerRegistry terbaru (AccessControl)
-        // Jika Anda sudah update IssuerRegistry ke AccessControl, gunakan grantRole.
-        // Asumsi di sini masih menggunakan fungsi wrapper atau logic lama untuk test ini.
-        // Jika error, sesuaikan dengan: registry.grantRole(registry.GOVERNANCE_ROLE(), admin); lalu addIssuer.
         registry.addIssuer(verifiedIssuer, "Universitas Amikom");
         vm.stopPrank();
     }
 
+    // Tes: issuer terverifikasi bisa mint dokumen resmi
     function testVerifiedIssuerCanMintOfficial() public {
         vm.startPrank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -47,6 +42,7 @@ contract HybridDocumentTest is Test {
         vm.stopPrank();
     }
 
+    // Tes: user publik tidak bisa mint dokumen resmi
     function testPublicUserCannotMintOfficial() public {
         vm.startPrank(publicUser);
         vm.expectRevert("Only verified issuers can mint official documents");
@@ -54,6 +50,7 @@ contract HybridDocumentTest is Test {
         vm.stopPrank();
     }
 
+    // Tes: user publik bisa mint dokumen publik
     function testPublicUserCanMintPublic() public {
         vm.startPrank(publicUser);
         document.mintPublicDocument(testUri, true, testHash1);
@@ -66,6 +63,7 @@ contract HybridDocumentTest is Test {
         vm.stopPrank();
     }
 
+    // Tes: hash dokumen tidak boleh duplikat
     function testCannotMintDuplicateHash() public {
         vm.startPrank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -75,6 +73,7 @@ contract HybridDocumentTest is Test {
         vm.stopPrank();
     }
 
+    // Tes: verifyByHash harus menemukan dokumen valid
     function testVerifyByHashValid() public {
         vm.prank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -91,13 +90,14 @@ contract HybridDocumentTest is Test {
         assertFalse(data.isRevoked);
     }
 
-    // FIX 2: Tambahkan 'view' karena fungsi ini tidak mengubah state
+    // Tes: verifyByHash harus return false jika hash tidak ditemukan
     function testVerifyByHashInvalid() public view {
         bytes32 fakeHash = keccak256("fake.pdf");
         (bool exists,,,,,) = document.verifyByHash(fakeHash);
         assertFalse(exists);
     }
 
+    // Tes: dokumen yang sudah direvoke terbaca sebagai revoked
     function testVerifyRevokedDocument() public {
         vm.startPrank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -108,20 +108,21 @@ contract HybridDocumentTest is Test {
         assertTrue(data.isRevoked);
     }
 
+    // Tes: SBT tidak bisa ditransfer oleh pemilik
     function testSBTCannotBeTransferred() public {
         vm.prank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
         
         vm.startPrank(recipient);
-        // Sesuaikan pesan revert dengan update logika SBT terbaru Anda
         vm.expectRevert(); 
         document.transferFrom(recipient, attacker, 1);
         vm.stopPrank();
     }
 
+    // Tes: NFT (non-soulbound) bisa ditransfer oleh pemilik
     function testNFTCanBeTransferred() public {
         vm.prank(verifiedIssuer);
-        document.mintOfficialDocument(recipient, testUri, false, testHash1); // false = NFT
+        document.mintOfficialDocument(recipient, testUri, false, testHash1);
 
         vm.startPrank(recipient);
         document.transferFrom(recipient, attacker, 1);
@@ -130,11 +131,11 @@ contract HybridDocumentTest is Test {
         assertEq(document.ownerOf(1), attacker);
     }
 
+    // Tes: issuer tetap bisa memindahkan SBT
     function testIssuerCanTransferSBT() public {
         vm.prank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
         
-        // Issuer transfer SBT (Recovery Mechanism)
         vm.startPrank(verifiedIssuer);
         document.transferFrom(recipient, attacker, 1);
         vm.stopPrank();
@@ -142,6 +143,7 @@ contract HybridDocumentTest is Test {
         assertEq(document.ownerOf(1), attacker);
     }
 
+    // Tes: issuer dapat revoke dokumen
     function testIssuerCanRevokeDocument() public {
         vm.prank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -153,6 +155,7 @@ contract HybridDocumentTest is Test {
         assertTrue(data.isRevoked);
     }
 
+    // Tes: non-issuer tidak bisa revoke dokumen
     function testNonIssuerCannotRevoke() public {
         vm.prank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -162,6 +165,7 @@ contract HybridDocumentTest is Test {
         document.revokeDocument(1);
     }
 
+    // Tes: mendapatkan list dokumen yang pernah diterbitkan issuer
     function testGetIssuerDocuments() public {
         vm.startPrank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -174,6 +178,7 @@ contract HybridDocumentTest is Test {
         assertEq(docs[1], 2);
     }
 
+    // Tes: totalSupply harus bertambah setelah mint
     function testTotalSupply() public {
         assertEq(document.totalSupply(), 0);
         vm.prank(verifiedIssuer);
@@ -181,6 +186,7 @@ contract HybridDocumentTest is Test {
         assertEq(document.totalSupply(), 1);
     }
 
+    // Tes: dokumen tidak bisa direvoke dua kali
     function testCannotRevokeAlreadyRevoked() public {
         vm.startPrank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -192,12 +198,14 @@ contract HybridDocumentTest is Test {
         vm.stopPrank();
     }
 
+    // Tes: hash kosong tidak boleh digunakan saat mint
     function testCannotMintWithEmptyHash() public {
         vm.prank(verifiedIssuer);
         vm.expectRevert("Document hash cannot be empty");
         document.mintOfficialDocument(recipient, testUri, true, bytes32(0));
     }
 
+    // Tes: tokenURI harus mengembalikan URI yang benar
     function testTokenURIWorks() public {
         vm.prank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
@@ -206,30 +214,23 @@ contract HybridDocumentTest is Test {
         assertEq(uri, testUri);
     }
 
+    // Tes: data issuer lama tetap valid meski issuer dinonaktifkan
     function testHistoricalDataPreservedAfterDeactivation() public {
-        // 1. Kampus Aktif menerbitkan Ijazah
         vm.startPrank(verifiedIssuer);
         document.mintOfficialDocument(recipient, testUri, true, testHash1);
         vm.stopPrank();
 
-        // 2. Tiba-tiba Kampus Tutup / Izin Dicabut (Soft Delete)
-        // Admin menonaktifkan issuer
         vm.startPrank(admin);
-        // Kita panggil setIssuerStatus (False)
         registry.setIssuerStatus(verifiedIssuer, false);
         vm.stopPrank();
 
-        // 3. Cek apakah Issuer sekarang bisa minting? (Harusnya GAGAL)
         vm.startPrank(verifiedIssuer);
         vm.expectRevert("Only verified issuers can mint official documents");
         document.mintOfficialDocument(recipient, testUri, true, testHash2);
         vm.stopPrank();
 
-        // 4. TAPI... Cek Ijazah LAMA (testHash1). Apakah namanya masih ada? (Harusnya ADA)
         (,,,, string memory issuerName, ) = document.verifyByHash(testHash1);
-        
-        // Assert ini membuktikan bahwa nama "Universitas Amikom" TETAP MUNCUL
-        // meskipun statusnya sekarang sudah tidak aktif.
+
         assertEq(issuerName, "Universitas Amikom");
     }    
 }

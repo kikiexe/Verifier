@@ -12,7 +12,7 @@ interface IIssuerRegistry {
 
 contract HybridDocument is ERC721, ERC721URIStorage, Ownable {
     
-    // FIX 1: Start dari 1 agar mapping hashToToken(0) valid untuk pengecekan existence
+    // Start dari 1 agar mapping hashToToken(0) valid untuk pengecekan existence
     uint256 private _nextTokenId = 1; 
     
     IIssuerRegistry public issuerRegistry;
@@ -40,7 +40,6 @@ contract HybridDocument is ERC721, ERC721URIStorage, Ownable {
     function mintOfficialDocument(address to, string memory uri, bool _soulbound, bytes32 _documentHash) public {
         require(issuerRegistry.isIssuer(msg.sender), "Only verified issuers can mint official documents");
         require(_documentHash != bytes32(0), "Document hash cannot be empty");
-        // Check collision: 0 berarti belum ada (karena ID mulai dari 1)
         require(hashToToken[_documentHash] == 0, "Document with this hash already exists");
         
         _createToken(to, uri, _soulbound, true, _documentHash);
@@ -85,8 +84,7 @@ contract HybridDocument is ERC721, ERC721URIStorage, Ownable {
         issuer = data.issuer;
         
         if (data.isVerified) {
-            // Panggil fungsi getIssuerName yang baru
-            // INI KUNCINYA: Walaupun issuer sudah isActive=false, namanya tetap bisa diambil!
+            // Mengambil nama dari registry walaupun status issuer sudah tidak aktif (untuk histori)
             issuerName = issuerRegistry.getIssuerName(issuer);
         } else {
             issuerName = "Self-Signed (Public)";
@@ -115,50 +113,45 @@ contract HybridDocument is ERC721, ERC721URIStorage, Ownable {
     }
     
     function totalSupply() public view returns (uint256) {
-        return _nextTokenId - 1; // Adjust karena start dari 1
+        return _nextTokenId - 1;
     }
 
     /**
-     * @dev Fungsi darurat untuk ganti alamat Registry (Buku Telepon)
+     * @dev Fungsi darurat untuk ganti alamat Registry
      */
     function setIssuerRegistry(address _newRegistry) external onlyOwner {
         require(_newRegistry != address(0), "Address tidak valid");
         issuerRegistry = IIssuerRegistry(_newRegistry);
     }
 
-    // ========== OVERRIDES & SECURITY ==========
+    // ---------- OVERRIDES & SECURITY ----------
     
-    // FIX 2: Override _isAuthorized untuk membiarkan Issuer melewati check Approval
+    // Override _isAuthorized untuk membiarkan Issuer melewati check Approval
+    // Diperlukan untuk mekanisme Revoke atau Re-issue oleh Issuer
     function _isAuthorized(address owner, address spender, uint256 tokenId) internal view override(ERC721) returns (bool) {
-        // Check logic standar (owner/approved/operator)
         if (super._isAuthorized(owner, spender, tokenId)) {
             return true;
         }
-        // Logic tambahan: Issuer selalu authorized (terutama untuk SBT/Revoke/Re-issue case)
         return (spender == documents[tokenId].issuer);
     }
 
     function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
         address from = _ownerOf(tokenId);
         
-        // SBT Logic: Block transfer kecuali mint/burn atau dilakukan oleh issuer
+        // Logika Soulbound (SBT): Block transfer kecuali mint/burn atau dilakukan oleh issuer
         if (from != address(0) && to != address(0)) {
             DocumentData memory doc = documents[tokenId];
-            // Logika Baru (Aman)
+            
             if (doc.isSoulbound) {
-                
                 // Skenario 1: Dokumen Resmi (Verified)
+                // Boleh ditransfer CUMA oleh Issuer (Recovery Mechanism jika wallet siswa hilang)
                 if (doc.isVerified) {
-                // Boleh ditransfer CUMA oleh Issuer (Kampus).
-                // Tujuannya: Jika mahasiswa kena hack, Kampus bisa "menyelamatkan" ijazahnya ke wallet baru.
-                require(msg.sender == doc.issuer, "SBT: Only Issuer can transfer");
+                    require(msg.sender == doc.issuer, "SBT: Only Issuer can transfer");
                 } 
-                
-                // Skenario 2: Dokumen Pribadi (Self-Signed / Public)
+                // Skenario 2: Dokumen Pribadi (Self-Signed)
+                // Tidak boleh ditransfer sama sekali
                 else {
-                // SAMA SEKALI TIDAK BOLEH DITRANSFER oleh siapapun, termasuk pembuatnya.
-                // Langsung tolak (revert).
-                revert("SBT: Token is non-transferable (Self-Signed)");
+                    revert("SBT: Token is non-transferable (Self-Signed)");
                 }
             }
         }

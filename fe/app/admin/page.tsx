@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { useAccount } from "wagmi"; // Gunakan hook dari Wagmi
-import { useEthersSigner } from "@/utils/ethers-adapter"; // Gunakan adapter yang sudah ada
+import { useAccount } from "wagmi";
+import { useEthersSigner } from "@/utils/ethers-adapter";
 import { REGISTRY_ADDRESS, REGISTRY_ABI } from "@/constants";
-import { ConnectButton } from "@rainbow-me/rainbowkit"; // Gunakan tombol standar RainbowKit
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 // Role Hash dari Solidity (keccak256("GOVERNANCE_ROLE"))
 const GOVERNANCE_ROLE = ethers.id("GOVERNANCE_ROLE"); 
@@ -16,7 +16,6 @@ interface Issuer {
 }
 
 export default function AdminPage() {
-  // 1. Ganti logika manual window.ethereum dengan Hooks ini
   const { address, isConnected } = useAccount();
   const signer = useEthersSigner();
 
@@ -28,17 +27,14 @@ export default function AdminPage() {
   const [newIssuerAddress, setNewIssuerAddress] = useState<string>("");
   const [newIssuerName, setNewIssuerName] = useState<string>("");
 
-  // 2. Cek Role Admin secara otomatis saat wallet terkoneksi
+  // Cek Role Admin secara otomatis saat wallet terkoneksi
   useEffect(() => {
     const checkRole = async () => {
       if (signer && address && REGISTRY_ADDRESS) {
         try {
-          // Reset status dulu
           setIsAdmin(false);
           
           const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
-          
-          // Cek apakah user punya role GOVERNANCE_ROLE
           const hasRole = await registry.hasRole(GOVERNANCE_ROLE, address);
           setIsAdmin(hasRole);
 
@@ -77,7 +73,6 @@ export default function AdminPage() {
       setNewIssuerName("");
     } catch (error: any) {
       console.error(error);
-      // Handle error spesifik
       if (error.reason) {
         setStatus("❌ Gagal: " + error.reason);
       } else {
@@ -115,7 +110,6 @@ export default function AdminPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-black mb-6">Governance Dashboard</h1>
 
-        {/* 3. Gunakan ConnectButton dari RainbowKit, bukan button manual */}
         <div className="mb-8 flex justify-center">
             <ConnectButton />
         </div>
@@ -174,7 +168,6 @@ export default function AdminPage() {
                 </div>
             )}
 
-            {/* List Placeholder (Opsional) */}
             <div className="mt-10 border-t pt-6">
                 <h3 className="font-bold text-lg mb-4">Issuer Terdaftar (Session Ini)</h3>
                 {issuers.length === 0 ? (

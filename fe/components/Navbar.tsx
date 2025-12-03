@@ -19,8 +19,6 @@ export default function Navbar() {
   const getMobileClass = (path: string) => 
     `flex-1 flex flex-col items-center p-2 rounded-lg ${pathname === path ? 'bg-yellow-100' : ''}`;
 
-  // Style dasar (Neo-Brutalism)
-  // SAYA MENAMBAHKAN 'cursor-pointer' DI SINI
   const baseButtonStyle = "cursor-pointer font-bold border-2 border-black rounded-lg py-2 px-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all";
 
   return (
@@ -40,7 +38,6 @@ export default function Navbar() {
             <Link href="/verify" className={getLinkClass('/verify')}>Verifikasi</Link>
           </div>
 
-          {/* CUSTOM CONNECT BUTTON */}
           <div>
             <ConnectButton.Custom>
               {({
@@ -120,7 +117,6 @@ export default function Navbar() {
 
       {/* Mobile Menu Bottom */}
       <div className="fixed bottom-4 left-4 right-4 z-50 md:hidden">
-        {/* TAMBAHKAN 'text-black' DI SINI */}
         <div className="flex justify-between rounded-xl border-2 border-black bg-white text-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
            
            <Link href="/" className={getMobileClass('/')}>

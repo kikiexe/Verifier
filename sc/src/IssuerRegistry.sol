@@ -7,14 +7,12 @@ contract IssuerRegistry is AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
 
-    // 1. Struct yang lebih robust (Sesuai ide kamu)
     struct Issuer {
         string name;
         bool isActive;      // True = Boleh minting, False = Dibekukan
-        bool isRegistered;  // True = Pernah terdaftar (Datanya ada)
+        bool isRegistered;  // True = Pernah terdaftar
     }
 
-    // 2. Mapping tunggal untuk menyimpan struct
     mapping(address => Issuer) public issuers;
 
     event IssuerAdded(address indexed issuer, string name);
@@ -31,8 +29,7 @@ contract IssuerRegistry is AccessControl {
         require(_issuer != address(0), "Address tidak valid");
         require(bytes(_name).length > 0, "Nama tidak boleh kosong");
 
-        // Jika sudah terdaftar, kita hanya update data & aktifkan kembali
-        // Jika belum, kita buat baru
+        // Jika sudah terdaftar, update data & aktifkan kembali. Jika belum, buat baru.
         issuers[_issuer] = Issuer({
             name: _name,
             isActive: true,
@@ -51,14 +48,14 @@ contract IssuerRegistry is AccessControl {
         emit IssuerStatusChanged(_issuer, _status);
     }
 
-    // --- Helper Functions untuk HybridDocument ---
+    // --- Helper Functions ---
 
     // Cek apakah boleh minting (Wajib Active)
     function isIssuer(address _account) external view returns (bool) {
         return issuers[_account].isActive;
     }
 
-    // Ambil nama (Walaupun sudah tidak aktif, nama tetap ada!)
+    // Ambil nama (Walaupun sudah tidak aktif, nama tetap tersimpan untuk histori)
     function getIssuerName(address _account) external view returns (string memory) {
         return issuers[_account].name;
     }

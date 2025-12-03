@@ -12,13 +12,11 @@ export const uploadFileToIPFS = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    // Metadata tambahan (opsional, biar rapi di dashboard Pinata)
     const metadata = JSON.stringify({
       name: file.name,
     });
     formData.append("pinataMetadata", metadata);
 
-    // Options (opsional)
     const options = JSON.stringify({
       cidVersion: 0,
     });
@@ -36,7 +34,6 @@ export const uploadFileToIPFS = async (file: File) => {
       }
     );
 
-    // Mengembalikan URL IPFS (contoh: ipfs://QmXaZb...)
     return `ipfs://${res.data.IpfsHash}`;
   } catch (error) {
     console.error("Error uploading file to IPFS:", error);
@@ -46,7 +43,7 @@ export const uploadFileToIPFS = async (file: File) => {
 
 /**
  * Fungsi untuk upload JSON Metadata (Standar NFT ERC-721)
- * Ini yang nanti masuk ke Blockchain, bukan file PDF-nya.
+ * Ini yang masuk ke Blockchain, bukan file PDF-nya.
  */
 export const uploadJSONToIPFS = async (jsonData: object) => {
   if (!JWT) throw new Error("Pinata JWT not found in .env");

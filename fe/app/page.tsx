@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Upload, Search, Lock, CheckCircle, Wallet } from "lucide-react";
 
-// Style Constants
 const cardStyle = `border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg bg-white p-6 transition-all hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`;
 const buttonStyle = `flex items-center justify-center gap-2 px-6 py-3 font-bold text-black border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all`;
 
@@ -14,7 +13,6 @@ export default function HomePage() {
         
         {/* Hero Section */}
         <div className="relative overflow-hidden rounded-xl border-2 border-black bg-[#fbbf24] p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-          {/* Hiasan background */}
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-black bg-white opacity-20"></div>
           <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full border-2 border-black bg-white opacity-20"></div>
           
@@ -36,7 +34,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Features Grid */}
+        {/* FFitur */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className={cardStyle}>
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-[#67e8f9]">
@@ -69,7 +67,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* How it works */}
+        {/* Alur Kerja */}
         <div className="rounded-xl border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <h2 className="mb-6 text-2xl font-black text-center">Cara Kerja Velipe</h2>
           <div className="space-y-4">
