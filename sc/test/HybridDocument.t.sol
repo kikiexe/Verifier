@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {IssuerRegistry} from "../src/IssuerRegistry.sol";
-import {HybridDocument} from "../src/HybridDocument.sol";
+import {IssuerRegistry} from "src/IssuerRegistry.sol";
+import {HybridDocument} from "src/HybridDocument.sol";
 
 contract HybridDocumentTest is Test {
     IssuerRegistry public registry;
