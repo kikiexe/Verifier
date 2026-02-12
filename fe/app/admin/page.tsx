@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ethers } from "ethers";
+import { useState, useEffect, useCallback } from "react";
+import { ethers, type EventLog, type LogDescription, type Log } from "ethers";
 import { useAccount } from "wagmi";
 import { useEthersSigner } from "@/utils/ethers-adapter";
 import { REGISTRY_ADDRESS, REGISTRY_ABI } from "@/constants";
@@ -26,8 +26,68 @@ export default function AdminPage() {
 
   const [newIssuerAddress, setNewIssuerAddress] = useState<string>("");
   const [newIssuerName, setNewIssuerName] = useState<string>("");
+  const [fetchingIssuers, setFetchingIssuers] = useState<boolean>(false);
 
-  // Cek Role Admin secara otomatis saat wallet terkoneksi
+  // Fetch all issuers from blockchain events
+  const fetchIssuersFromBlockchain = useCallback(async () => {
+    if (!signer || !REGISTRY_ADDRESS) return;
+    
+    setFetchingIssuers(true);
+    try {
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
+      
+      // Get current block number
+      const provider = signer.provider;
+      if (!provider) return;
+      
+      const currentBlock = await provider.getBlockNumber();
+      
+      // Contract deployed at block 34383635
+      const deploymentBlock = 34383635;
+      
+      // Query in chunks to avoid RPC payload too large error
+      const CHUNK_SIZE = 10000; // 10k blocks per query
+      const allEvents: (Log | EventLog | LogDescription)[] = [];
+      
+      for (let fromBlock = deploymentBlock; fromBlock <= currentBlock; fromBlock += CHUNK_SIZE) {
+        const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
+        
+        try {
+          const filter = registry.filters.IssuerAdded();
+          const events = await registry.queryFilter(filter, fromBlock, toBlock);
+          allEvents.push(...events);
+        } catch (error) {
+          console.error(`Error fetching events from block ${fromBlock} to ${toBlock}:`, error);
+        }
+      }
+      
+      // Parse events and check if each issuer is still active
+      const issuerPromises = allEvents.map(async (event: Log | EventLog | LogDescription) => {
+        // Cast to EventLog to access args
+        const eventLog = event as EventLog;
+        const issuerAddress = eventLog.args.issuer;
+        const issuerName = eventLog.args.name;
+        
+        // Check if issuer is still active (not deactivated)
+        const isActive = await registry.isIssuer(issuerAddress);
+        
+        return isActive ? { address: issuerAddress, name: issuerName } : null;
+      });
+      
+      const issuerList = await Promise.all(issuerPromises);
+      
+      // Filter out null values (deactivated issuers)
+      const activeIssuers = issuerList.filter((i): i is Issuer => i !== null);
+      
+      setIssuers(activeIssuers);
+    } catch (error: unknown) {
+      console.error("Error fetching issuers from blockchain:", error);
+    } finally {
+      setFetchingIssuers(false);
+    }
+  }, [signer]);
+
+  // Cek Role Admin dan fetch issuers saat wallet terkoneksi
   useEffect(() => {
     const checkRole = async () => {
       if (signer && address && REGISTRY_ADDRESS) {
@@ -38,10 +98,13 @@ export default function AdminPage() {
           const hasRole = await registry.hasRole(GOVERNANCE_ROLE, address);
           setIsAdmin(hasRole);
 
-          if (!hasRole) {
+          if (hasRole) {
+            // Fetch issuers from blockchain if user is admin
+            await fetchIssuersFromBlockchain();
+          } else {
             console.warn("Wallet connected but not Admin");
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Error checking role:", error);
         }
       }
@@ -51,8 +114,9 @@ export default function AdminPage() {
       checkRole();
     } else {
       setIsAdmin(false);
+      setIssuers([]);
     }
-  }, [signer, address, isConnected]);
+  }, [signer, address, isConnected, fetchIssuersFromBlockchain]);
 
   const handleAddIssuer = async () => {
     if (!signer) return alert("Wallet tidak terdeteksi!");
@@ -68,15 +132,19 @@ export default function AdminPage() {
       await tx.wait();
 
       setStatus("✅ Berhasil! Issuer terdaftar.");
-      setIssuers([...issuers, { address: newIssuerAddress, name: newIssuerName }]);
+      
+      // Refetch issuers from blockchain to get updated list
+      await fetchIssuersFromBlockchain();
+      
       setNewIssuerAddress("");
       setNewIssuerName("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      if (error.reason) {
-        setStatus("❌ Gagal: " + error.reason);
+      const err = error as { reason?: string; message?: string };
+      if (err.reason) {
+        setStatus("❌ Gagal: " + err.reason);
       } else {
-        setStatus("❌ Gagal: " + (error.message || "Transaksi dibatalkan"));
+        setStatus("❌ Gagal: " + (err.message || "Transaksi dibatalkan"));
       }
     } finally {
       setLoading(false);
@@ -96,10 +164,13 @@ export default function AdminPage() {
       await tx.wait();
 
       setStatus("✅ Issuer berhasil dihapus!");
-      setIssuers(issuers.filter((i) => i.address !== targetAddress));
-    } catch (error: any) {
+      
+      // Refetch issuers from blockchain to get updated list
+      await fetchIssuersFromBlockchain();
+    } catch (error: unknown) {
       console.error(error);
-      setStatus("❌ Gagal: " + (error.reason || error.message));
+      const err = error as { reason?: string; message?: string };
+      setStatus("❌ Gagal: " + (err.reason || err.message));
     } finally {
       setLoading(false);
     }
@@ -169,9 +240,11 @@ export default function AdminPage() {
             )}
 
             <div className="mt-10 border-t pt-6">
-                <h3 className="font-bold text-lg mb-4">Issuer Terdaftar (Session Ini)</h3>
-                {issuers.length === 0 ? (
-                    <p className="text-gray-500 text-sm italic">Belum ada issuer yang ditambahkan di sesi ini.</p>
+                <h3 className="font-bold text-lg mb-4">Issuer Terdaftar {fetchingIssuers && "(Loading...)"}</h3>
+                {fetchingIssuers ? (
+                    <p className="text-gray-500 text-sm italic">Memuat data dari blockchain...</p>
+                ) : issuers.length === 0 ? (
+                    <p className="text-gray-500 text-sm italic">Belum ada issuer yang terdaftar di blockchain.</p>
                 ) : (
                     <ul className="space-y-2">
                         {issuers.map((iss, idx) => (

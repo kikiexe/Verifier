@@ -19,5 +19,8 @@ export const REGISTRY_ABI = [
   "function setIssuerStatus(address _issuer, bool _status)",
   "function isIssuer(address _account) view returns (bool)",
   "function getIssuerName(address _account) view returns (string)",
-  "function GOVERNANCE_ROLE() view returns (bytes32)"
+  "function GOVERNANCE_ROLE() view returns (bytes32)",
+  // Events
+  "event IssuerAdded(address indexed issuer, string name)",
+  "event IssuerStatusChanged(address indexed issuer, bool isActive)"
 ];
