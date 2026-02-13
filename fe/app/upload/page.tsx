@@ -27,8 +27,11 @@ export default function UploadPage() {
   const [documentHash, setDocumentHash] = useState<string>("");
   const [successTx, setSuccessTx] = useState<string>("");
 
+  // Set recipient as placeholder only if empty (don't overwrite user input)
   useEffect(() => {
-    if (address) setRecipient(address);
+    if (address && !recipient) {
+      setRecipient(address);
+    }
   }, [address]);
 
   const calculateHash = async (fileInput: File): Promise<string> => {
@@ -113,6 +116,11 @@ export default function UploadPage() {
       
       // Cek apakah user adalah verified issuer
       const isIssuer = await registryContract.isIssuer(address); 
+
+      // DEBUG: Log recipient value
+      console.log("🔍 DEBUG - Recipient value:", recipient);
+      console.log("🔍 DEBUG - Connected address:", address);
+      console.log("🔍 DEBUG - Are they same?", recipient.toLowerCase() === address?.toLowerCase());
 
       let tx;
       if (isIssuer) {
