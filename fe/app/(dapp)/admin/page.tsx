@@ -42,8 +42,8 @@ export default function AdminPage() {
       
       const currentBlock = await provider.getBlockNumber();
       
-      // Contract deployed at block 34383635
-      const deploymentBlock = 34383635;
+      // Contract deployed at block 38088367
+      const deploymentBlock = 38088367;
       
       // Query in chunks to avoid RPC payload too large error
       const CHUNK_SIZE = 10000; // 10k blocks per query

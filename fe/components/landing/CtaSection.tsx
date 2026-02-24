@@ -11,7 +11,7 @@ export default function CtaSection() {
           </h2>
           <p style={{ fontSize: 15, color: "rgba(12,12,15,.6)", lineHeight: 1.65 }}>Gratis, permanen, dan terdesentralisasi.</p>
         </div>
-        <Link href="/upload"
+        <Link href="/dashboard"
           style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 10, padding: "17px 34px", background: "#0c0c0f", color: "var(--accent)", fontSize: 15, fontWeight: 800, borderRadius: 9999, whiteSpace: "nowrap", transition: "all .2s", fontFamily: "'DM Sans',sans-serif" }}
           onMouseEnter={e => { e.currentTarget.style.background = "#1e1e2e"; e.currentTarget.style.transform = "translateY(-2px)"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "#0c0c0f"; e.currentTarget.style.transform = "translateY(0)"; }}

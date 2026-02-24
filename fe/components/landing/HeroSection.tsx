@@ -23,7 +23,7 @@ export default function HeroSection() {
       </p>
 
       <div className="afu d3" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <Link href="/upload" className="btn-primary">
+        <Link href="/dashboard" className="btn-primary">
           Launch App <ArrowRight size={16} />
         </Link>
         <Link href="/verify" className="btn-ghost">

@@ -2,15 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Shield, Upload, Search, House, User } from 'lucide-react';
+import { Upload, Search, House, User } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit'; 
 import ProfileSidebar from './ProfileSidebar';
 import { useAccount } from 'wagmi';
+import logoImg from '@/app/icon.png';
 
-const colors = {
-  primary: 'bg-[#fbbf24]',
-};
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -31,9 +30,7 @@ export default function Navbar() {
       <nav className="sticky top-0 z-50 w-full border-b-2 border-black bg-white text-black px-4 py-3 shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <Link href="/dashboard" className="flex cursor-pointer items-center gap-2">
-            <div className={`h-10 w-10 overflow-hidden rounded-full border-2 border-black ${colors.primary} flex items-center justify-center`}>
-              <Shield className="h-6 w-6 text-black" strokeWidth={2.5} />
-            </div>
+            <Image src={logoImg} alt="Velipe" width={40} height={40} className="h-10 w-10 rounded-full border-2 border-black" />
             <span className="text-xl font-black tracking-tighter">VELIPE</span>
           </Link>
 

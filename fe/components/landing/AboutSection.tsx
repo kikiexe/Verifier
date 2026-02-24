@@ -21,7 +21,7 @@ export default function AboutSection() {
           <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.8, marginBottom: 36 }}>
             Transparan, anti manipulasi, dan bisa diverifikasi siapa saja tanpa perlu mempercayai pihak ketiga.
           </p>
-          <Link href="/upload"
+          <Link href="/dashboard"
             style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.06em", transition: "gap .2s" }}
             onMouseEnter={e => e.currentTarget.style.gap = "14px"}
             onMouseLeave={e => e.currentTarget.style.gap = "8px"}

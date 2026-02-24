@@ -1,28 +1,7 @@
 // fe/constants/index.ts
 
-export const REGISTRY_ADDRESS = "0xF48a2086202F89B000645c68c933cbB3bEfBA958";
-export const CONTRACT_ADDRESS = "0x1f33c4Ad972ecf3E8C20817667861e109889A015";
+export const REGISTRY_ADDRESS = "0x23aCb89a1d7acd5dae57eB629646BF38b3fBD248";
+export const CONTRACT_ADDRESS = "0x70C63487F66CD1e921aDa30490B919b810C1C4b3";
 
-export const CONTRACT_ABI = [
-  "function mintOfficialDocument(address to, string uri, bool soulbound, bytes32 hash) external",
-  "function mintPublicDocument(string uri, bool soulbound, bytes32 hash) external",
-  "function verifyByHash(bytes32 hash) external view returns (bool, uint256, address, address, string, tuple(bytes32 documentHash, address issuer, uint256 timestamp, bool isSoulbound, bool isVerified, bool isRevoked) data)",
-  "function revokeDocument(uint256 tokenId) external",
-  "function getDocumentData(uint256 tokenId) external view returns (tuple(bytes32 documentHash, address issuer, uint256 timestamp, bool isSoulbound, bool isVerified, bool isRevoked) data)",
-  "function getIssuerDocuments(address issuer) external view returns (uint256[])",
-  "function tokenURI(uint256 tokenId) external view returns (string)",
-  "function ownerOf(uint256 tokenId) external view returns (address)"
-];
-
-export const REGISTRY_ABI = [
-  "function hasRole(bytes32 role, address account) view returns (bool)",
-  "function addIssuer(address _issuer, string _name)",
-  "function setIssuerStatus(address _issuer, bool _status)",
-  "function isIssuer(address _account) view returns (bool)",
-  "function getIssuerName(address _account) view returns (string)",
-  "function issuers(address) view returns (string name, bool isActive, bool isRegistered)",
-  "function GOVERNANCE_ROLE() view returns (bytes32)",
-  // Events
-  "event IssuerAdded(address indexed issuer, string name)",
-  "event IssuerStatusChanged(address indexed issuer, bool isActive)"
-];
+export { default as CONTRACT_ABI } from "./HybridDocument-abi.json";
+export { default as REGISTRY_ABI } from "./IssuerRegistry-abi.json";
