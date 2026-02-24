@@ -9,6 +9,7 @@ export const CONTRACT_ABI = [
   "function verifyByHash(bytes32 hash) external view returns (bool, uint256, address, address, string, tuple(bytes32 documentHash, address issuer, uint256 timestamp, bool isSoulbound, bool isVerified, bool isRevoked) data)",
   "function revokeDocument(uint256 tokenId) external",
   "function getDocumentData(uint256 tokenId) external view returns (tuple(bytes32 documentHash, address issuer, uint256 timestamp, bool isSoulbound, bool isVerified, bool isRevoked) data)",
+  "function getIssuerDocuments(address issuer) external view returns (uint256[])",
   "function tokenURI(uint256 tokenId) external view returns (string)",
   "function ownerOf(uint256 tokenId) external view returns (address)"
 ];
@@ -19,6 +20,7 @@ export const REGISTRY_ABI = [
   "function setIssuerStatus(address _issuer, bool _status)",
   "function isIssuer(address _account) view returns (bool)",
   "function getIssuerName(address _account) view returns (string)",
+  "function issuers(address) view returns (string name, bool isActive, bool isRegistered)",
   "function GOVERNANCE_ROLE() view returns (bytes32)",
   // Events
   "event IssuerAdded(address indexed issuer, string name)",

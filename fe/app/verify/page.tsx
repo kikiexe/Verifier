@@ -16,9 +16,24 @@ import {
   ExternalLink 
 } from "lucide-react";
 
+interface VerificationData {
+  tokenId: string;
+  owner: string;
+  issuer: string;
+  issuerName: string;
+  isSoulbound: boolean;
+  isVerified: boolean;
+  isRevoked: boolean;
+  timestamp: string;
+  hash: string;
+  uri: string;
+  metadata: Record<string, unknown>; // Metadata IPFS bisa fleksibel, tapi Record lebih baik dari unknown
+}
+
 export default function VerifyPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [manualHash, setManualHash] = useState("");
+  const [data, setData] = useState<VerificationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -29,24 +44,33 @@ export default function VerifyPage() {
     return "0x" + hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   };
 
-  const handleVerify = async () => {
-    if (!file) return;
+  const handleVerify = async (isManual = false) => {
+    const targetHash = isManual ? manualHash : (file ? await calculateHash(file) : null);
+    
+    if (!targetHash) {
+      setError("Silakan pilih file atau masukkan hash dokumen.");
+      return;
+    }
+
+    if (isManual && (!targetHash.startsWith("0x") || targetHash.length !== 66)) {
+      setError("Format Hash tidak valid. Pastikan diawali '0x' dan berjumlah 66 karakter.");
+      return;
+    }
     
     setLoading(true);
     setError("");
     setData(null);
 
     try {
-      // 1. Hitung Hash File Lokal
-      const docHash = await calculateHash(file);
-      console.log("Calculated Hash:", docHash);
+      console.log("Verifying Hash:", targetHash);
 
-      // 2. Panggil Blockchain (Menggunakan RPC Publik)
-      const provider = new ethers.JsonRpcProvider("https://base-sepolia.g.alchemy.com/v2/IRm0znUyu95uZVbyEupxv");
+      // 1. Panggil Blockchain (Menggunakan RPC dari env atau fallback ke public)
+      const rpcUrl = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC || "https://sepolia.base.org";
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-      // 3. Verifikasi on-chain
-      const result = await contract.verifyByHash(docHash);
+      // 2. Verifikasi on-chain
+      const result = await contract.verifyByHash(targetHash);
       const [exists, tokenId, owner, issuer, issuerName, docData] = result;
 
       if (!exists) {
@@ -57,10 +81,10 @@ export default function VerifyPage() {
       let metadata = {};
       try {
         const uri = await contract.tokenURI(tokenId);
-        const httpUri = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+        const httpUri = uri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
         const metaRes = await fetch(httpUri);
         metadata = await metaRes.json();
-      } catch (err) {
+      } catch {
         console.warn("Gagal ambil metadata IPFS, menggunakan data on-chain saja.");
       }
 
@@ -83,9 +107,11 @@ export default function VerifyPage() {
         metadata
       });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error(err);
-        setError(err.reason || err.message || "Terjadi kesalahan sistem atau koneksi RPC.");
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const reason = (err && typeof err === 'object' && 'reason' in err) ? (err as { reason: string }).reason : undefined;
+        setError(reason || errorMessage || "Terjadi kesalahan sistem atau koneksi RPC.");
     } finally {
         setLoading(false);
     }
@@ -100,7 +126,7 @@ export default function VerifyPage() {
             <p className="font-medium text-gray-500 text-lg">Validasi keaslian dokumen digital dengan teknologi Blockchain.</p>
         </div>
 
-        {/* Upload Area */}
+        {/* Area Upload File */}
         <div className="mb-10 w-full max-w-2xl mx-auto">
             {!file ? (
                 <div className="relative flex h-56 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-3 border-dashed border-gray-300 bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all group">
@@ -111,6 +137,7 @@ export default function VerifyPage() {
                         onChange={(e) => {
                             if (e.target.files?.[0]) {
                                 setFile(e.target.files[0]);
+                                setManualHash(""); // Reset manual hash jika file dipilih
                                 setError(""); 
                             }
                         }} 
@@ -128,20 +155,20 @@ export default function VerifyPage() {
                             <div className="bg-blue-200 p-3 rounded-lg border-2 border-black text-black">
                                 <FileText size={24} />
                             </div>
-                            <div>
+                            <div className="grow">
                                 <p className="font-bold text-lg text-gray-900 truncate max-w-[200px] sm:max-w-xs">{file.name}</p>
                                 <p className="text-xs font-bold text-blue-600">{(file.size / 1024).toFixed(0)} KB</p>
                             </div>
                         </div>
                         <button 
                             onClick={() => {setFile(null); setData(null); setError("");}} 
-                            className="text-red-600 font-bold hover:bg-red-100 px-3 py-1 rounded-lg transition-colors"
+                            className="text-red-600 font-bold hover:bg-red-100 px-3 py-1 rounded-lg transition-colors shrink-0"
                         >
                             Ganti
                         </button>
                     </div>
                     <button 
-                        onClick={handleVerify}
+                        onClick={() => handleVerify(false)}
                         disabled={loading}
                         className="w-full bg-[#fbbf24] hover:bg-yellow-400 text-black p-4 rounded-xl font-black text-xl border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all flex justify-center items-center gap-3"
                     >
@@ -149,6 +176,42 @@ export default function VerifyPage() {
                     </button>
                 </div>
             )}
+        </div>
+
+        {/* Separator / ATAU */}
+        <div className="mb-10 w-full max-w-2xl mx-auto">
+            <div className="relative flex items-center mb-6">
+                <div className="grow border-t border-gray-300"></div>
+                <span className="mx-4 shrink text-xs font-black text-gray-400 uppercase tracking-widest">Atau Masukkan Hash Manual</span>
+                <div className="grow border-t border-gray-300"></div>
+            </div>
+
+            <div className="bg-white rounded-2xl border-2 border-black p-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <div className="flex flex-col gap-4">
+                    <div className="relative">
+                        <input 
+                            type="text"
+                            placeholder="Tempel (paste) Digital Fingerprint (0x...) di sini"
+                            value={manualHash}
+                            onChange={(e) => {
+                                setManualHash(e.target.value);
+                                if (e.target.value) {
+                                    setFile(null);
+                                    setError("");
+                                }
+                            }}
+                            className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-black focus:outline-none font-mono text-sm transition-all"
+                        />
+                    </div>
+                    <button 
+                        onClick={() => handleVerify(true)}
+                        disabled={loading || !manualHash}
+                        className="w-full bg-[#fbbf24] hover:bg-yellow-400 text-black p-4 rounded-xl font-black text-xl border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all flex justify-center items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loading ? <><Loader2 className="animate-spin" size={24}/> Memproses...</> : <><Search size={24} strokeWidth={3} /> VERIFIKASI HASH</>}
+                    </button>
+                </div>
+            </div>
         </div>
 
         {/* Error State */}
@@ -177,10 +240,10 @@ export default function VerifyPage() {
               <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                   <h2 className="text-3xl font-extrabold tracking-tight mb-2">
-                    {data.metadata?.name || "Dokumen Terverifikasi"}
+                    {(data.metadata?.name as string) || "Dokumen Terverifikasi"}
                   </h2>
                   <p className="text-blue-100/90 text-sm max-w-xl leading-relaxed">
-                    {data.metadata?.description || "Deskripsi tidak tersedia untuk dokumen ini."}
+                    {(data.metadata?.description as string) || "Deskripsi tidak tersedia untuk dokumen ini."}
                   </p>
                 </div>
                 

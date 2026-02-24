@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { useEthersSigner } from "@/utils/ethers-adapter";
-import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/ipfs"; 
+import { uploadJSONToIPFS } from "@/utils/ipfs"; 
 import { CONTRACT_ADDRESS, CONTRACT_ABI, REGISTRY_ADDRESS, REGISTRY_ABI } from "@/constants";
 import HybridToggle from "@/components/HybridToggle";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -24,7 +24,6 @@ export default function UploadPage() {
   const [isSoulbound, setIsSoulbound] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<string>("");
-  const [documentHash, setDocumentHash] = useState<string>("");
   const [successTx, setSuccessTx] = useState<string>("");
 
   // Set recipient as placeholder only if empty (don't overwrite user input)
@@ -32,7 +31,7 @@ export default function UploadPage() {
     if (address && !recipient) {
       setRecipient(address);
     }
-  }, [address]);
+  }, [address, recipient]);
 
   const calculateHash = async (fileInput: File): Promise<string> => {
     const arrayBuffer = await fileInput.arrayBuffer();
@@ -86,7 +85,6 @@ export default function UploadPage() {
       setStatus("Menghitung Hash Dokumen...");
       
       const docHash = await calculateHash(file);
-      setDocumentHash(docHash);
       
       // Menggunakan placeholder untuk file fisik (Privacy protection)
       const fileCid = "private-document"; 
@@ -138,9 +136,11 @@ export default function UploadPage() {
       setSuccessTx(tx.hash);
       setStatus("SUKSES! Hash tercatat, File aman di lokal.");
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      setStatus("❌ Gagal: " + (error.reason || error.message));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const reason = (error && typeof error === 'object' && 'reason' in error) ? (error as { reason: string }).reason : undefined;
+      setStatus("❌ Gagal: " + (reason || errorMessage));
     } finally {
       setLoading(false);
     }
@@ -159,83 +159,13 @@ export default function UploadPage() {
             </p>
         </div>
 
+        <div className="mb-6">
+            <ConnectButton />
+        </div>
+
         {!isConnected ? (
             <div className={`${cardStyle} text-center space-y-4`}>
-                <p className="font-bold text-lg">Anda belum terhubung.</p>
-                <div>
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openChainModal,
-                    openConnectModal,
-                    authenticationStatus,
-                    mounted,
-                  }) => {
-                    const ready = mounted && authenticationStatus !== 'loading';
-                    const connected =
-                      ready &&
-                      account &&
-                      chain &&
-                      (!authenticationStatus || authenticationStatus === 'authenticated');
-
-                    return (
-                      <div
-                        {...(!ready && {
-                          'aria-hidden': true,
-                          'style': {
-                            opacity: 0,
-                            pointerEvents: 'none',
-                            userSelect: 'none',
-                          },
-                        })}
-                      >
-                        {(() => {
-                          if (!connected) {
-                            return (
-                              <button 
-                                onClick={openConnectModal} 
-                                type="button"
-                                className={`${buttonStyle} bg-blue-600 text-white hover:bg-blue-700`}
-                              >
-                                Connect Wallet
-                              </button>
-                            );
-                          }
-
-                          if (chain.unsupported) {
-                            return (
-                              <button 
-                                onClick={openChainModal} 
-                                type="button"
-                                className={`${buttonStyle} bg-red-500 text-white hover:bg-red-600`}
-                              >
-                                Wrong Network
-                              </button>
-                            );
-                          }
-
-                          return (
-                            <div style={{ display: 'flex', gap: 12 }}>
-                              <button
-                                onClick={openAccountModal}
-                                type="button"
-                                className={`${buttonStyle} bg-green-400 text-black hover:bg-green-500 flex items-center gap-2`}
-                              >
-                                {account.displayName}
-                                {account.displayBalance
-                                  ? ` (${account.displayBalance})`
-                                  : ''}
-                              </button>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
-          </div>
+                <p className="font-bold text-lg">Silakan hubungkan wallet untuk menerbitkan dokumen.</p>
             </div>
         ) : (
             <div className={`${cardStyle} space-y-6`}>

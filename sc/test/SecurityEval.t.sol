@@ -81,11 +81,5 @@ contract SecurityEvalTest is Test {
         vm.prank(issuer);
         vm.expectRevert("Document with this hash already exists");
         document.mintOfficialDocument(user, "ipfs://resmi", true, docHash);
-
-        // CATATAN UNTUK SKRIPSI:
-        // Ini adalah fitur, bukan bug. First-come-first-served menjamin keunikan.
-        // Solusi mitigasi: Kampus harus memastikan hash unik atau menggunakan salt jika perlu,
-        // tapi dalam kasus Ijazah, jika hash sudah ada di public, Kampus bisa mendeteksi
-        // bahwa dokumen tersebut sudah diklaim dan melakukan investigasi off-chain.
     }
 }
