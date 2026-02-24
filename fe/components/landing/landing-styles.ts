@@ -218,8 +218,11 @@ export const GLOBAL_CSS = `
     .show-mob { display:flex !important; }
     .about-grid { grid-template-columns:1fr !important; gap:40px !important; }
     .howitworks-grid { grid-template-columns:1fr !important; }
+    .hiw-sticky { position:static !important; }
     .feat-grid { grid-template-columns:1fr !important; }
-    .cta-card { padding:48px 32px !important; }
+    .cta-card { padding:48px 24px !important; flex-direction:column !important; align-items:flex-start !important; }
+    .security-card { padding:48px 24px !important; }
+    .nav-blur { max-width:calc(100% - 24px) !important; }
   }
   @media (min-width:769px) {
     .show-mob { display:none !important; }

@@ -1,7 +1,7 @@
 export default function SecurityCallout() {
   return (
     <section style={{ padding: "0 32px 120px", maxWidth: 1120, margin: "0 auto" }}>
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 28, padding: "88px 72px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+      <div className="security-card" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 28, padding: "88px 72px", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% -10%, rgba(200,240,78,.09) 0%, transparent 60%)", pointerEvents: "none" }} />
         <div style={{ position: "relative" }}>
           <div className="vtag" style={{ display: "inline-flex", marginBottom: 24 }}>Privacy First</div>

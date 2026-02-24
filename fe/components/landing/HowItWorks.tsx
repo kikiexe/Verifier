@@ -12,7 +12,7 @@ export default function HowItWorks() {
     <section id="how-it-works" style={{ padding: "80px 32px 120px", borderTop: "1px solid var(--border)", maxWidth: 1120, margin: "0 auto" }}>
       <div className="howitworks-grid" style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 80, alignItems: "start" }}>
         {/* Sticky label */}
-        <div style={{ position: "sticky", top: 100 }}>
+        <div className="hiw-sticky" style={{ position: "sticky", top: 100 }}>
           <div className="vtag" style={{ marginBottom: 20 }}>How it Works</div>
           <h2 className="font-display" style={{ fontSize: "clamp(2rem,3.5vw,3rem)", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1.04, color: "var(--text)", marginBottom: 20 }}>
             Four steps to secure forever
