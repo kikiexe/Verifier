@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { useEthersSigner } from "@/utils/ethers-adapter";
@@ -25,13 +25,6 @@ export default function UploadPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<string>("");
   const [successTx, setSuccessTx] = useState<string>("");
-
-  // Set recipient as placeholder only if empty (don't overwrite user input)
-  useEffect(() => {
-    if (address && !recipient) {
-      setRecipient(address);
-    }
-  }, [address, recipient]);
 
   const calculateHash = async (fileInput: File): Promise<string> => {
     const arrayBuffer = await fileInput.arrayBuffer();
@@ -114,11 +107,6 @@ export default function UploadPage() {
       
       // Cek apakah user adalah verified issuer
       const isIssuer = await registryContract.isIssuer(address); 
-
-      // DEBUG: Log recipient value
-      console.log("🔍 DEBUG - Recipient value:", recipient);
-      console.log("🔍 DEBUG - Connected address:", address);
-      console.log("🔍 DEBUG - Are they same?", recipient.toLowerCase() === address?.toLowerCase());
 
       let tx;
       if (isIssuer) {

@@ -62,8 +62,6 @@ export default function VerifyPage() {
     setData(null);
 
     try {
-      console.log("Verifying Hash:", targetHash);
-
       // 1. Panggil Blockchain (Menggunakan RPC dari env atau fallback ke public)
       const rpcUrl = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC || "https://sepolia.base.org";
       const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -79,8 +77,9 @@ export default function VerifyPage() {
 
       // 4. Ambil Metadata (Optional via IPFS)
       let metadata = {};
+      let uri = "";
       try {
-        const uri = await contract.tokenURI(tokenId);
+        uri = await contract.tokenURI(tokenId);
         const httpUri = uri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
         const metaRes = await fetch(httpUri);
         metadata = await metaRes.json();
@@ -103,7 +102,7 @@ export default function VerifyPage() {
             day: 'numeric' 
         }),
         hash: docData.documentHash,
-        uri: await contract.tokenURI(tokenId),
+        uri: uri,
         metadata
       });
 

@@ -11,6 +11,7 @@ import {
   REGISTRY_ABI 
 } from "@/constants";
 import { X, FileText, ShieldAlert, Trash2, Loader2, User, Building, Copy, Check } from "lucide-react";
+import CertificateCard from "./CertificateCard";
 
 interface ProfileSidebarProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface DocItem {
   hash: string;
   name: string;
   description: string;
+  image?: string;
 }
 
 export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
@@ -192,6 +194,15 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
                   )}
 
                   <div className="mb-4">
+                    <div className="mb-4">
+                      <CertificateCard 
+                        name={doc.name}
+                        issuerName={issuerProfileName}
+                        date={doc.timestamp}
+                        isVerified={doc.isVerified}
+                        tokenId={doc.tokenId}
+                      />
+                    </div>
                     <h4 className="font-black text-xl text-black leading-tight mb-1">{doc.name}</h4>
                     {doc.description && (
                       <p className="text-sm text-gray-500 mb-2 line-clamp-2 leading-relaxed">
