@@ -1,5 +1,8 @@
+/**
+ * DappLayout - Layout khusus untuk halaman-halaman aplikasi (dapp).
+ * Menyediakan kerangka dasar termasuk komponen Navbar.
+ */
 import Navbar from "../../components/Navbar";
-import ClientLayout from "../../components/ClientLayout";
 
 export default function DappLayout({
   children,
@@ -7,9 +10,9 @@ export default function DappLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClientLayout>
+    <>
       <Navbar />
       {children}
-    </ClientLayout>
+    </>
   );
 }

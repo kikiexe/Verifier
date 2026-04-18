@@ -1,3 +1,7 @@
+/**
+ * UploadPage - Halaman untuk menerbitkan dokumen baru (Minting).
+ * Pengguna dapat memilih tipe dokumen (SBT/NFT) dan menanda-tangani transaksi blockchain.
+ */
 "use client";
 
 import { useState } from "react";
@@ -5,10 +9,11 @@ import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { useEthersSigner } from "@/utils/ethers-adapter";
 import { uploadJSONToIPFS } from "@/utils/ipfs"; 
-import { CONTRACT_ADDRESS, CONTRACT_ABI, REGISTRY_ADDRESS, REGISTRY_ABI } from "@/constants";
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from "@/constants";
 import HybridToggle from "@/components/HybridToggle";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Upload, FileText, X, CheckCircle, Loader2 } from "lucide-react";
+import { useIssuer } from "@/hooks/useIssuer";
 
 const cardStyle = `border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg bg-white p-6 transition-all`;
 const inputStyle = `w-full px-4 py-3 border-2 border-black rounded-lg focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all bg-white font-bold placeholder:font-normal`;
@@ -17,6 +22,7 @@ const buttonStyle = `w-full flex items-center justify-center gap-2 px-6 py-4 fon
 export default function UploadPage() {
   const { address, isConnected } = useAccount();
   const signer = useEthersSigner();
+  const { data: issuer } = useIssuer();
 
   const [recipient, setRecipient] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
@@ -103,13 +109,12 @@ export default function UploadPage() {
       setStatus("Menunggu Konfirmasi Transaksi Blockchain...");
       
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-      const registryContract = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
       
-      // Cek apakah user adalah verified issuer
-      const isIssuer = await registryContract.isIssuer(address); 
+      // Cek apakah user adalah verified issuer (menggunakan data dari hook)
+      const isVerified = issuer?.isVerified || false; 
 
       let tx;
-      if (isIssuer) {
+      if (isVerified) {
           setStatus("Mencetak Dokumen Resmi (Verified Issuer)...");
           tx = await contract.mintOfficialDocument(recipient, metadataCid, isSoulbound, docHash);
       } else {
