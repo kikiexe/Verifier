@@ -1,12 +1,15 @@
+/**
+ * Navbar - Komponen navigasi utama aplikasi Velipe.
+ * Menangani navigasi antar halaman dan status koneksi wallet.
+ */
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Upload, Search, House, User } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit'; 
-import ProfileSidebar from './ProfileSidebar';
 import { useAccount } from 'wagmi';
 import logoImg from '@/app/icon.png';
 
@@ -14,7 +17,6 @@ import logoImg from '@/app/icon.png';
 export default function Navbar() {
   const pathname = usePathname();
   const { isConnected } = useAccount();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path || (path === '/dashboard' && pathname === '/');
 
@@ -44,19 +46,18 @@ export default function Navbar() {
             <ConnectButton />
 
             {isConnected && (
-              <button 
-                onClick={() => setIsProfileOpen(true)}
-                className="p-2 border-2 border-black rounded-full hover:bg-gray-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none bg-white"
+              <Link 
+                href="/profile"
+                className={`p-2 border-2 border-black rounded-full hover:bg-gray-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none bg-white flex items-center justify-center ${isActive('/profile') ? 'bg-yellow-400' : ''}`}
                 title="Profil Saya"
               >
                 <User size={24} />
-              </button>
+              </Link>
             )}
           </div>
         </div>
       </nav>
 
-      <ProfileSidebar isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
 
       {/* Mobile Menu Bottom */}
       <div className="fixed bottom-4 left-4 right-4 z-50 md:hidden">
@@ -76,6 +77,13 @@ export default function Navbar() {
              <Search size={20} strokeWidth={2.5} />
              <span className="text-[10px] font-bold mt-1">Cek</span>
            </Link>
+
+           {isConnected && (
+              <Link href="/profile" className={getMobileClass('/profile')}>
+                <User size={20} strokeWidth={2.5} />
+                <span className="text-[10px] font-bold mt-1">Profil</span>
+              </Link>
+           )}
 
         </div>
       </div>

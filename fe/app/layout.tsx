@@ -1,8 +1,15 @@
+/**
+ * RootLayout - Struktur dasar aplikasi Next.js.
+ * Membungkus seluruh aplikasi dengan ClientLayout yang berisi provider Web3 dan TanStack.
+ */
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+import ClientLayout from "../components/ClientLayout";
+
 const inter = Inter({ subsets: ["latin"] });
+
 
 export const metadata: Metadata = {
   title: "Velipe",
@@ -17,7 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {children}
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );
