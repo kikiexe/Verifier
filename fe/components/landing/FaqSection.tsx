@@ -9,7 +9,7 @@ const FAQS = [
   { q: "Apakah dokumen saya aman?", a: "Ya. File dokumen asli tidak pernah dikirim ke server manapun. Hanya hash (sidik jari digital) yang dicatat di blockchain, dan metadata disimpan di IPFS secara terdesentralisasi. Tidak ada pihak ketiga yang bisa mengakses dokumen Anda." },
   { q: "Apa bedanya SBT dan NFT?", a: "Soulbound Token (SBT) tidak bisa ditransfer cocok untuk ijazah dan sertifikat permanen. NFT bisa ditransfer antar wallet cocok untuk dokumen yang perlu dipindahkan kepemilikannya." },
   { q: "Berapa biayanya?", a: "Biaya gas di Base L2 sangat murah, biasanya kurang dari $0.01 per transaksi. Tidak ada biaya platform tambahan dari Velipe." },
-  { q: "Siapa yang bisa menjadi Verified Issuer?", a: "Institusi resmi (universitas, lembaga sertifikasi, dll.) bisa menjadi Verified Issuer melalui proses governance on-chain yang dikelola oleh admin protokol." },
+  { q: "Siapa yang bisa menjadi Verified Issuer?", a: "Institusi resmi (universitas, lembaga sertifikasi, dll.) bisa menjadi Verified Issuer melalui proses governance on-chain yang dikelola oleh pengelola platform." },
 ];
 
 export default function FaqSection() {

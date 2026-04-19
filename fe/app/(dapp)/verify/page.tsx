@@ -1,3 +1,7 @@
+/**
+ * VerifyPage - Halaman untuk memverifikasi keaslian dokumen.
+ * Melakukan pengecekan hash dokumen terhadap Sidik Jari Digital yang tersimpan di blockchain.
+ */
 "use client";
 
 import { useState } from "react";
@@ -15,6 +19,7 @@ import {
   Globe, 
   ExternalLink 
 } from "lucide-react";
+import { useEthersProvider } from "@/utils/ethers-adapter";
 
 interface VerificationData {
   tokenId: string;
@@ -36,6 +41,7 @@ export default function VerifyPage() {
   const [data, setData] = useState<VerificationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const provider = useEthersProvider();
 
   const calculateHash = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
@@ -62,9 +68,8 @@ export default function VerifyPage() {
     setData(null);
 
     try {
-      // 1. Panggil Blockchain (Menggunakan RPC dari env atau fallback ke public)
-      const rpcUrl = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC || "https://sepolia.base.org";
-      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      // 1. Panggil Blockchain (Menggunakan centralized provider)
+      if (!provider) throw new Error("Provider tidak tersedia. Periksa koneksi internet Anda.");
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
       // 2. Verifikasi on-chain
