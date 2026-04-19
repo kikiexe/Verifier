@@ -1,6 +1,6 @@
 /**
- * hook useAdmin - Menangani logika khusus untuk peran Governance (Admin).
- * Digunakan untuk mengecek hak akses admin dan mengelola daftar issuer melalui blockchain event logs.
+ * hook useAdmin - Menangani logika khusus untuk peran Governance (Pengelola Platform).
+ * Digunakan untuk mengecek hak akses pengelola platform dan mengelola daftar issuer melalui blockchain event logs.
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ethers, type EventLog, type Log, type LogDescription } from "ethers";

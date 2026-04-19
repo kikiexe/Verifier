@@ -109,8 +109,8 @@ export default function ProfilePage() {
               </div>
             ) : !documents || documents.length === 0 ? (
               <div className="text-center py-20 bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-black">
-                  <FileText size={40} className="text-gray-400" />
+                <div className="bg-[#fbbf24] w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <FileText size={40} className="text-black" />
                 </div>
                 <h3 className="font-black text-xl mb-2">Belum ada dokumen</h3>
                 <p className="text-gray-500 font-bold">Anda belum menerbitkan apa pun melalui alamat ini.</p>
@@ -142,26 +142,26 @@ export default function ProfilePage() {
                              <span className="text-xs font-bold text-gray-400 shrink-0">#{doc.tokenId}</span>
                         </div>
                         {doc.description && (
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-2 font-medium leading-relaxed bg-slate-50 p-3 rounded-lg border-2 border-dashed border-slate-200">
+                            <p className="text-sm text-black mb-4 line-clamp-2 font-bold leading-relaxed bg-yellow-200 p-3 rounded-lg border-2 border-dashed border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                                 {doc.description}
                             </p>
                         )}
                         
                         <div className="space-y-4 mb-6">
-                            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-gray-400">
+                            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-black">
                                 <span>Status:</span>
-                                <span className={`px-2 py-0.5 rounded border ${doc.isVerified ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-green-100 text-green-700 border-green-300'}`}>
+                                <span className={`px-2 py-0.5 rounded border-2 ${doc.isVerified ? 'bg-blue-400 text-black border-black' : 'bg-green-400 text-black border-black'}`}>
                                     {doc.isVerified ? 'OFFICIAL' : 'PUBLIC'}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-gray-400">
+                            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-black">
                                 <span>Tanggal:</span>
                                 <span className="text-black">{doc.timestamp}</span>
                             </div>
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Fingerprint (Hash):</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-2">Fingerprint (Hash):</p>
                                 <div className="flex items-center gap-2">
-                                    <code className="bg-black text-green-400 p-2 rounded-lg text-[10px] font-mono break-all flex-1 border border-green-900/50 shadow-inner">
+                                    <code className="bg-black text-[#00ff00] p-2 rounded-lg text-[10px] font-mono break-all flex-1 border-2 border-black shadow-inner">
                                         {doc.hash.substring(0, 16)}...{doc.hash.substring(doc.hash.length - 16)}
                                     </code>
                                     <button 

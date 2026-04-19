@@ -71,13 +71,13 @@ export function useDocuments() {
       return docsData.reverse();
     },
     enabled: !!address,
+    staleTime: 60 * 1000, // 60 detik
   });
 }
 
 export function useRevokeDocument() {
   const signer = useEthersSigner();
   const queryClient = useQueryClient();
-  const { address } = useAccount();
 
   return useMutation({
     mutationFn: async (tokenId: string) => {
@@ -87,8 +87,8 @@ export function useRevokeDocument() {
       const tx = await contract.revokeDocument(tokenId);
       return tx.wait();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents", address] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
 }

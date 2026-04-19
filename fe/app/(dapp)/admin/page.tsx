@@ -1,6 +1,6 @@
 /**
  * AdminPage - Halaman tata kelola (Governance).
- * Hanya dapat diakses oleh Admin untuk mendaftarkan atau menghapus verified issuer.
+ * Hanya dapat diakses oleh Pengelola Platform untuk mendaftarkan atau menghapus verified issuer.
  */
 "use client";
 
@@ -77,12 +77,12 @@ export default function AdminPage() {
         {!isConnected ? (
           <div className={cardStyle + " text-center"}>
             <p className="font-black text-xl">Wallet Disconnected</p>
-            <p className="text-gray-500 font-bold mt-2">Silakan hubungkan wallet Admin untuk melanjutkan.</p>
+            <p className="text-gray-500 font-bold mt-2">Silakan hubungkan wallet Pengelola Platform untuk melanjutkan.</p>
           </div>
         ) : isAdminLoading ? (
           <div className="flex flex-col items-center justify-center p-20">
             <Loader2 size={48} className="animate-spin mb-4" />
-            <p className="font-black">Memverifikasi Izin Admin...</p>
+            <p className="font-black">Memverifikasi Izin Pengelola Platform...</p>
           </div>
         ) : !isAdmin ? (
           <div className="bg-red-50 border-4 border-red-500 p-8 rounded-2xl shadow-[8px_8px_0px_0px_rgba(239,68,68,1)]">
